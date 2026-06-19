@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unidos Mayoreo · Sistema de Visitas</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0ede8;color:#1a1a1a;min-height:100vh}
+
+/* HEADER */
+.header{background:#B03A2E;color:white;padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
+.header-left h1{font-size:17px;font-weight:600;letter-spacing:.5px}
+.header-left p{font-size:10px;opacity:.8;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.visit-count .num{font-size:32px;font-weight:600;line-height:1;text-align:right}
+.visit-count .lbl{font-size:10px;opacity:.8;text-transform:uppercase;letter-spacing:.5px;text-align:right}
+
+/* NAV */
+.nav{background:#922B21;display:flex;padding:0 20px}
+.nav button{background:none;border:none;color:rgba(255,255,255,.65);padding:11px 18px;cursor:pointer;font-size:13px;border-bottom:3px solid transparent;transition:all .15s;display:flex;align-items:center;gap:6px}
+.nav button.active{color:white;border-bottom-color:white}
+.nav button:hover{color:white}
+
+/* LAYOUT */
+.content{padding:20px;max-width:1100px;margin:0 auto}
+.page{display:none}.page.active{display:block}
+.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.page-header h2{font-size:18px;font-weight:600}
+
+/* BUTTONS */
+.btn-red{background:#B03A2E;color:white;border:none;padding:9px 18px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.btn-red:hover{background:#922B21}
+.btn-back{background:none;border:1px solid #ccc;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px;color:#555}
+.btn-back:hover{background:#eee}
+.btn-add{background:#1A5276;color:white;border:none;padding:7px 14px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600;margin-top:4px;display:inline-flex;align-items:center;gap:5px}
+.btn-save{background:#566573;color:white;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;transition:background .15s}
+.btn-save:hover{background:#B03A2E}
+.btn-rm{background:#FAECE7;color:#993C1D;border:none;width:28px;height:28px;border-radius:5px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.metric{background:white;border-radius:8px;padding:14px 16px;border:1px solid #e8e4df}
+.metric-lbl{font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.metric-val{font-size:26px;font-weight:600}
+
+/* TABLE */
+.tbl-wrap{background:white;border-radius:8px;border:1px solid #e8e4df;overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#B03A2E;color:white;padding:10px 12px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+td{padding:11px 12px;border-bottom:1px solid #f0ede8;vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafaf9}
+.cl-name{font-weight:600;font-size:13px}
+.cl-sub{font-size:11px;color:#888;margin-top:1px}
+.code{color:#B03A2E;font-weight:700}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500;margin:1px}
+.b-red{background:#FAECE7;color:#993C1D}
+.b-orange{background:#FAEEDA;color:#854F0B}
+.st{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600}
+.st-r{background:#EAF3DE;color:#3B6D11}
+.st-p{background:#E6F1FB;color:#185FA5}
+.st-n{background:#FAEEDA;color:#854F0B}
+.act-list{font-size:11px;color:#666;list-style:none}
+.act-list li{padding:1px 0 1px 10px;position:relative}
+.act-list li::before{content:"•";position:absolute;left:0;color:#B03A2E}
+.edit-btn{background:none;border:1px solid #ccc;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:11px;color:#666;display:inline-flex;align-items:center;gap:3px}
+.edit-btn:hover{background:#f5f5f5}
+.empty-state{text-align:center;padding:48px;color:#888;font-size:14px}
+
+/* FORM */
+.form-section{background:white;border-radius:8px;border:1px solid #e8e4df;padding:20px;margin-bottom:16px}
+.sec-title{font-size:13px;font-weight:700;color:#B03A2E;text-transform:uppercase;letter-spacing:.5px;padding-bottom:12px;border-bottom:2px solid #B03A2E;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg label{font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px}
+.fg input,.fg select,.fg textarea{padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:13px;background:white;color:#1a1a1a;font-family:inherit}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:#B03A2E;box-shadow:0 0 0 2px rgba(176,58,46,.12)}
+.fg textarea{min-height:70px;resize:vertical}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.full{grid-column:1/-1}
+
+/* PILLS */
+.pill-group{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.pill{padding:6px 14px;border-radius:20px;border:1px solid #ccc;cursor:pointer;font-size:12px;background:white;color:#333;transition:all .12s;user-select:none}
+.pill.on{background:#B03A2E;color:white;border-color:#B03A2E}
+
+/* DYNAMIC ROWS */
+.dyn-row{display:grid;gap:10px;align-items:center;margin-bottom:8px}
+.dyn-row-3{grid-template-columns:1fr .6fr 1fr 32px}
+.dyn-row-4{grid-template-columns:1fr .6fr .6fr .6fr 32px}
+.dyn-row input,.dyn-row select{padding:7px 10px;border:1px solid #ccc;border-radius:5px;font-size:13px;font-family:inherit}
+.dyn-row input:focus,.dyn-row select:focus{outline:none;border-color:#B03A2E}
+
+/* STARS */
+.stars{display:flex;gap:8px;margin-top:6px}
+.star{width:34px;height:34px;border-radius:50%;border:1px solid #ccc;background:white;cursor:pointer;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.star.on{background:#D4832A;color:white;border-color:#D4832A}
+
+.form-footer{display:flex;justify-content:space-between;align-items:center;padding-top:16px;border-top:1px solid #eee;margin-top:8px}
+.form-footer .hint{font-size:11px;color:#aaa}
+
+/* CHARTS */
+.ch-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.ch-card{background:white;border-radius:8px;border:1px solid #e8e4df;padding:18px}
+.ch-title{font-size:13px;font-weight:700;margin-bottom:14px}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.bar-lbl{min-width:130px;font-size:12px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{flex:1;background:#f0ede8;border-radius:4px;height:20px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding:0 8px}
+.bar-fill span{color:white;font-size:11px;font-weight:600}
+.bar-pct{min-width:30px;font-size:12px;font-weight:600;text-align:right}
+.zone-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px}
+.zone-card{background:#f0ede8;border-radius:6px;padding:10px;text-align:center}
+.zone-num{font-size:22px;font-weight:700}
+.zone-nm{font-size:11px;color:#666;margin-top:2px}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:#1E8449;color:white;padding:10px 18px;border-radius:7px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
+.toast.show{opacity:1}
+
+/* SPINNER */
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* CONFIG BANNER */
+.config-banner{background:#FFF3CD;border:1px solid #FFEAA7;border-radius:8px;padding:16px;margin-bottom:18px;display:flex;align-items:flex-start;gap:12px}
+.config-banner.hidden{display:none}
+.config-banner i{font-size:20px;color:#D68910;flex-shrink:0;margin-top:1px}
+.config-banner p{font-size:13px;color:#7D6608;line-height:1.5}
+.config-banner a{color:#B03A2E;font-weight:600}
+
+@media(max-width:700px){
+  .metrics{grid-template-columns:1fr 1fr}
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .ch-grid{grid-template-columns:1fr}
+  .dyn-row-4{grid-template-columns:1fr 1fr}
+  table{font-size:11px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>UNIDOS MAYOREO</h1>
+    <p>Sistema de Registro · Desarrollo de Categorías</p>
+  </div>
+  <div class="visit-count">
+    <div class="num" id="hdr-count">0</div>
+    <div class="lbl">Visitas registradas</div>
+  </div>
+</div>
+
+<div class="nav">
+  <button class="active" onclick="nav('analysis')"><i class="ti ti-chart-bar"></i> Análisis de visitas</button>
+  <button onclick="nav('charts')"><i class="ti ti-chart-pie"></i> Gráficos</button>
+  <button onclick="nav('form')"><i class="ti ti-plus"></i> Nueva visita</button>
+</div>
+
+<div class="content">
+
+  <!-- BANNER de configuración -->
+  <div class="config-banner" id="config-banner">
+    <i class="ti ti-alert-triangle"></i>
+    <p>
+      <strong>Configuración requerida:</strong> Para guardar datos en Google Sheets, reemplaza
+      <code>TU_URL_DE_APPS_SCRIPT</code> en el archivo <code>config.js</code> con la URL de tu Web App.
+      <a href="INSTRUCCIONES.md" target="_blank">Ver instrucciones paso a paso →</a>
+    </p>
+  </div>
+
+  <!-- ANALYSIS -->
+  <div id="page-analysis" class="page active">
+    <div class="page-header">
+      <h2>Análisis consolidado de visitas</h2>
+      <button class="btn-red" onclick="nav('form')"><i class="ti ti-plus"></i> + Nueva visita</button>
+    </div>
+    <div class="metrics">
+      <div class="metric"><div class="metric-lbl">Total visitas</div><div class="metric-val" id="m-tot">0</div></div>
+      <div class="metric"><div class="metric-lbl">Resueltos</div><div class="metric-val" style="color:#3B6D11" id="m-res">0</div></div>
+      <div class="metric"><div class="metric-lbl">En proceso</div><div class="metric-val" style="color:#185FA5" id="m-pro">0</div></div>
+      <div class="metric"><div class="metric-lbl">Pendientes</div><div class="metric-val" style="color:#854F0B" id="m-pen">0</div></div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Código</th><th>Cliente</th><th>Zona</th><th>Hallazgos</th>
+            <th>Problemas</th><th>Acciones clave</th><th>Estado</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="tbl-body">
+          <tr><td colspan="8"><div class="empty-state">Cargando visitas...</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <div id="page-charts" class="page">
+    <h2 style="margin-bottom:16px;font-size:18px;font-weight:600">Gráficos y estadísticas</h2>
+    <div id="charts-inner"></div>
+  </div>
+
+  <!-- FORM -->
+  <div id="page-form" class="page">
+    <div class="page-header">
+      <h2 id="form-ttl">Registrar nueva visita</h2>
+      <button class="btn-back" onclick="nav('analysis')"><i class="ti ti-arrow-left"></i> Volver</button>
+    </div>
+    <input type="hidden" id="f-eid">
+
+    <!-- SEC 1 -->
+    <div class="form-section">
+      <div class="sec-title"><i class="ti ti-clipboard-list"></i> 1. Datos generales de la visita</div>
+      <div class="grid-2">
+        <div class="fg"><label>Fecha de visita *</label><input type="date" id="f-date"></div>
+        <div class="fg"><label>Agente responsable *</label><input type="text" id="f-agent" placeholder="Nombre del agente"></div>
+        <div class="fg"><label>Zona / Ruta *</label>
+          <select id="f-zone">
+            <option value="">— Seleccionar —</option>
+            <option>Heredia</option><option>San José</option><option>Alajuela</option>
+            <option>Cartago</option><option>Limón</option><option>Puntarenas</option><option>Guanacaste</option>
+          </select>
+        </div>
+        <div class="fg"><label>Código de cliente *</label><input type="text" id="f-code" placeholder="Ej: 5017"></div>
+        <div class="fg"><label>Nombre del cliente *</label><input type="text" id="f-name" placeholder="Razón social o nombre"></div>
+        <div class="fg"><label>Tipo de negocio</label>
+          <select id="f-type">
+            <option value="">— Seleccionar —</option>
+            <option>Supermercado / Mixto</option><option>Ferretería</option><option>Farmacia</option>
+            <option>Distribuidora</option><option>Pulpería</option><option>Minisuper</option><option>Otro</option>
+          </select>
+        </div>
+        <div class="fg"><label>Contacto / Dueño</label><input type="text" id="f-contact"></div>
+        <div class="fg"><label>Teléfono</label><input type="tel" id="f-phone"></div>
+      </div>
+    </div>
+
+    <!-- SEC 2 -->
+    <div class="form-section">
+      <div class="sec-title"><i class="ti ti-credit-card"></i> 2. Estado de la cuenta</div>
+      <div class="grid-3">
+        <div class="fg"><label>Días de crédito vencido</label><input type="number" id="f-dias"></div>
+        <div class="fg"><label>Monto en mora (₡)</label><input type="number" id="f-mora"></div>
+        <div class="fg"><label>Facturas con errores</label><input type="number" id="f-fact"></div>
+        <div class="fg"><label>Notas de crédito pendientes</label><input type="number" id="f-nc"></div>
+        <div class="fg"><label>Devoluciones sin resolver</label><input type="number" id="f-dev"></div>
+      </div>
+    </div>
+
+    <!-- SEC 3 -->
+    <div class="form-section">
+      <div class="sec-title"><i class="ti ti-zoom-question"></i> 3. Hallazgos de la visita</div>
+      <div style="margin-bottom:16px">
+        <div class="fg"><label>Problemas identificados (seleccionar todos los que aplican)</label></div>
+        <div class="pill-group" id="pills-group"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="fg"><label>Reclamos del cliente</label><textarea id="f-reclamos"></textarea></div>
+        <div class="fg"><label>Competencia identificada / marcas que compra</label><textarea id="f-competencia"></textarea></div>
+        <div class="fg"><label>Problemas de garantía / taller / repuestos</label><textarea id="f-garantia"></textarea></div>
+        <div class="fg"><label>Material POP / exhibidores / faltantes</label><textarea id="f-pop"></textarea></div>
+        <div class="fg"><label>Observaciones adicionales</label><textarea id="f-obs"></textarea></div>
+      </div>
+    </div>
+
+    <!-- SEC 4 -->
+    <div class="form-section">
+      <div class="sec-title"><i class="ti ti-package"></i> 4. Pedido / negocio realizado</div>
+      <div style="display:grid;grid-template-columns:1fr .6fr 1fr 32px;gap:10px;margin-bottom:8px">
+        <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px">Categoría / Línea</span>
+        <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px">Monto (₡)</span>
+        <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px">Observaciones</span>
+        <span></span>
+      </div>
+      <div id="pedido-rows"></div>
+      <button class="btn-add" onclick="addPedido()"><i class="ti ti-plus"></i> + Agregar línea</button>
+    </div>
+
+    <!-- SEC 5 -->
+    <div class="form-section">
+      <div class="sec-title"><i class="ti ti-checkbox"></i> 5. Acciones y compromisos</div>
+      <div style="display:grid;grid-template-columns:1fr .6fr .6fr .6fr 32px;gap:10px;margin-bottom:8px">
+        <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px">Acción a ejecutar</span>
+        <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px">Responsable</span>
+        <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px">Fecha compromiso</span>
+        <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px">Prioridad</span>
+        <span></span>
+      </div>
+      <div id="accion-rows"></div>
+      <button class="btn-add" style="background:#1A5276" onclick="addAccion()"><i class="ti ti-plus"></i> + Agregar acción</button>
+    </div>
+
+    <!-- SEC 6 -->
+    <div class="form-section">
+      <div class="sec-title"><i class="ti ti-checklist"></i> 6. Evaluación y cierre</div>
+      <div class="grid-3">
+        <div class="fg">
+          <label>¿Se realizó pedido?</label>
+          <select id="f-pedido-realizado">
+            <option value="">— Seleccionar —</option>
+            <option>Sí</option><option>No</option><option>Pedido parcial</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Satisfacción del cliente (1–5)</label>
+          <div class="stars" id="stars-row">
+            <div class="star" onclick="setStar(1)">1</div>
+            <div class="star" onclick="setStar(2)">2</div>
+            <div class="star" onclick="setStar(3)">3</div>
+            <div class="star" onclick="setStar(4)">4</div>
+            <div class="star" onclick="setStar(5)">5</div>
+          </div>
+          <input type="hidden" id="f-sat" value="0">
+        </div>
+        <div class="fg"><label>Próxima visita programada</label><input type="date" id="f-nextv"></div>
+        <div class="fg full"><label>Comentarios finales / contexto adicional</label><textarea id="f-comments"></textarea></div>
+        <div class="fg full"><label>Firma / nombre del encargado</label><input type="text" id="f-firma"></div>
+      </div>
+      <div class="form-footer">
+        <span class="hint">* Código, nombre y fecha son obligatorios</span>
+        <button class="btn-save" id="save-btn" onclick="saveVisit()">
+          <i class="ti ti-device-floppy"></i> Guardar visita
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
