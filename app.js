@@ -11,6 +11,7 @@ const PROBLEMS = [
 let visits = [];
 let starVal = 0;
 let editId = null;
+let currentPhotos = []; // [{dataUrl, isNew:true}] nuevas | [{url, isNew:false}] ya subidas
 let isConfigured = CONFIG.SCRIPT_URL !== 'TU_URL_DE_APPS_SCRIPT';
 
 // ── INIT ──────────────────────────────────────────────────
@@ -54,7 +55,7 @@ function nav(p) {
   );
   document.getElementById('page-' + p).classList.add('active');
   if (p === 'analysis') renderTable();
-  if (p === 'charts') renderCharts();
+  if (p === 'charts') { populateChartFilterOptions(); renderCharts(); }
   if (p === 'form' && !editId) resetForm();
 }
 
@@ -116,6 +117,79 @@ function getAcciones() {
   }).filter(a => a.accion.trim());
 }
 
+// ── EVIDENCIA FOTOGRÁFICA ─────────────────────────────────
+function compressImage(file, maxWidth = 1280, quality = 0.7) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxWidth) {
+          height = Math.round(height * (maxWidth / width));
+          width = maxWidth;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => reject(new Error('No se pudo leer la imagen'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handlePhotoSelect(event) {
+  const files = Array.from(event.target.files || []);
+  for (const file of files) {
+    try {
+      const dataUrl = await compressImage(file);
+      currentPhotos.push({ dataUrl, isNew: true });
+    } catch (e) {
+      console.error('Error procesando foto:', e);
+      toast('No se pudo procesar una de las fotos.', false);
+    }
+  }
+  renderPhotoGrid();
+  event.target.value = ''; // permite volver a elegir el mismo archivo
+}
+
+function renderPhotoGrid() {
+  const grid = document.getElementById('photo-grid');
+  const empty = document.getElementById('photo-empty');
+  if (!currentPhotos.length) {
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  grid.innerHTML = currentPhotos.map((p, i) => {
+    const src = p.isNew ? p.dataUrl : p.url;
+    return `<div class="photo-thumb">
+      <img src="${src}" onclick="openLightbox('${src.replace(/'/g, "\\'")}')" alt="Evidencia ${i + 1}">
+      <button type="button" class="photo-rm" onclick="removePhoto(${i})" title="Quitar foto">×</button>
+    </div>`;
+  }).join('');
+}
+
+function removePhoto(i) {
+  currentPhotos.splice(i, 1);
+  renderPhotoGrid();
+}
+
+function openLightbox(src) {
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').classList.add('show');
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('show');
+}
+
 // ── FORMULARIO ────────────────────────────────────────────
 function resetForm() {
   editId = null;
@@ -133,6 +207,8 @@ function resetForm() {
   document.querySelectorAll('.star').forEach(s => s.classList.remove('on'));
   document.getElementById('pedido-rows').innerHTML = '';
   document.getElementById('accion-rows').innerHTML = '';
+  currentPhotos = [];
+  renderPhotoGrid();
   buildPills();
   addPedido();
   addAccion();
@@ -163,6 +239,8 @@ function populateForm(v) {
   document.getElementById('accion-rows').innerHTML = '';
   (v.acciones || []).forEach(a => addAccion(a));
   if (!(v.acciones || []).length) addAccion();
+  currentPhotos = (v.fotos || []).filter(Boolean).map(url => ({ url, isNew: false }));
+  renderPhotoGrid();
 }
 
 // ── GUARDAR VISITA ────────────────────────────────────────
@@ -196,6 +274,7 @@ async function saveVisit() {
     obs: document.getElementById('f-obs').value.trim(),
     pedidos: getPedidos(),
     acciones: getAcciones(),
+    fotos: currentPhotos.map(p => p.isNew ? p.dataUrl : p.url),
     pedidoRealizado: document.getElementById('f-pedido-realizado').value,
     satisfaccion: parseInt(document.getElementById('f-sat').value) || 0,
     nextv: document.getElementById('f-nextv').value,
@@ -217,6 +296,8 @@ async function saveVisit() {
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || 'Error desconocido');
+      // Reemplaza las fotos base64 locales por las URLs reales de Drive
+      if (data.fotos) v.fotos = data.fotos;
     } catch (e) {
       toast('Error al guardar en Google Sheets: ' + e.message, false);
       btn.disabled = false;
@@ -288,7 +369,7 @@ function renderTable() {
   updateMetrics();
   const tb = document.getElementById('tbl-body');
   if (!visits.length) {
-    tb.innerHTML = '<tr><td colspan="8"><div class="empty-state">No hay visitas registradas aún. Haga clic en "+ Nueva visita" para comenzar.</div></td></tr>';
+    tb.innerHTML = '<tr><td colspan="9"><div class="empty-state">No hay visitas registradas aún. Haga clic en "+ Nueva visita" para comenzar.</div></td></tr>';
     return;
   }
   tb.innerHTML = visits.map(v => {
@@ -297,6 +378,10 @@ function renderTable() {
     const acts = (v.acciones || []).slice(0, 2).map(a => `<li>${a.accion}</li>`).join('');
     const sc = v.status === 'Resuelto' ? 'st-r' : v.status === 'En proceso' ? 'st-p' : 'st-n';
     const sat = v.satisfaccion ? '⭐'.repeat(v.satisfaccion) : '—';
+    const nFotos = (v.fotos || []).filter(Boolean).length;
+    const fotosCell = nFotos
+      ? `<span class="badge" style="background:#E6F1FB;color:#185FA5;cursor:pointer" onclick="viewVisitPhotos('${v.id}')"><i class="ti ti-camera"></i> ${nFotos}</span>`
+      : '<span style="color:#bbb;font-size:11px">—</span>';
     return `<tr>
       <td><span class="code">${v.code}</span></td>
       <td><div class="cl-name">${v.name}</div><div class="cl-sub">${v.type || ''}</div><div class="cl-sub">${v.date || ''}</div></td>
@@ -304,21 +389,81 @@ function renderTable() {
       <td style="max-width:180px;font-size:12px;color:#666">${(v.reclamos || v.obs || '').substring(0, 70)}${((v.reclamos || v.obs || '').length > 70 ? '…' : '')}</td>
       <td>${probs}${extra}${!(v.problems || []).length ? '<span style="color:#bbb;font-size:11px">Sin problemas</span>' : ''}</td>
       <td><ul class="act-list">${acts}</ul></td>
+      <td>${fotosCell}</td>
       <td><span class="st ${sc}">${v.status}</span><div style="font-size:11px;margin-top:4px">${sat}</div></td>
       <td><button class="edit-btn" onclick="editVisit('${v.id}')"><i class="ti ti-edit"></i> Editar</button></td>
     </tr>`;
   }).join('');
 }
 
+// ── VER FOTOS DE UNA VISITA (desde la tabla) ──────────────
+function viewVisitPhotos(id) {
+  const v = visits.find(x => x.id === id);
+  if (!v || !(v.fotos || []).length) return;
+  openLightbox(v.fotos[0]);
+}
+
+// ── FILTROS DE GRÁFICOS ───────────────────────────────────
+function populateChartFilterOptions() {
+  const zones = [...new Set(visits.map(v => v.zone).filter(Boolean))].sort();
+  const agents = [...new Set(visits.map(v => v.agent).filter(Boolean))].sort();
+  const problems = [...new Set(visits.flatMap(v => v.problems || []))].sort();
+  const fill = (id, arr) => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— Todos —</option>' +
+      arr.map(x => `<option ${x === current ? 'selected' : ''}>${x}</option>`).join('');
+  };
+  fill('cf-zone', zones);
+  fill('cf-agent', agents);
+  fill('cf-problem', problems);
+}
+
+function getChartFilters() {
+  return {
+    start: document.getElementById('cf-date-start').value,
+    end: document.getElementById('cf-date-end').value,
+    status: document.getElementById('cf-status').value,
+    zone: document.getElementById('cf-zone').value,
+    problem: document.getElementById('cf-problem').value,
+    agent: document.getElementById('cf-agent').value
+  };
+}
+
+function applyChartFilters() {
+  const f = getChartFilters();
+  const filtered = visits.filter(v => {
+    if (f.start && v.date < f.start) return false;
+    if (f.end && v.date > f.end) return false;
+    if (f.status && v.status !== f.status) return false;
+    if (f.zone && v.zone !== f.zone) return false;
+    if (f.problem && !(v.problems || []).includes(f.problem)) return false;
+    if (f.agent && v.agent !== f.agent) return false;
+    return true;
+  });
+  renderCharts(filtered);
+}
+
+function resetChartFilters() {
+  ['cf-date-start', 'cf-date-end', 'cf-status', 'cf-zone', 'cf-problem', 'cf-agent']
+    .forEach(id => { document.getElementById(id).value = ''; });
+  renderCharts();
+}
+
 // ── GRÁFICOS ──────────────────────────────────────────────
-function renderCharts() {
+function renderCharts(list) {
+  const data = list || visits;
+  const cfCount = document.getElementById('cf-count');
+  if (cfCount) cfCount.textContent = `Mostrando ${data.length} de ${visits.length} visitas`;
+
   const el = document.getElementById('charts-inner');
-  if (!visits.length) {
-    el.innerHTML = '<div class="empty-state" style="background:white;border-radius:8px;padding:48px">No hay datos aún.</div>';
+  if (!data.length) {
+    el.innerHTML = '<div class="empty-state" style="background:white;border-radius:8px;padding:48px">No hay datos para los filtros seleccionados.</div>';
     return;
   }
   const byS = {}, byZ = {}, byP = {}, bySat = [0, 0, 0, 0, 0];
-  visits.forEach(v => {
+  data.forEach(v => {
     byS[v.status] = (byS[v.status] || 0) + 1;
     if (v.zone) byZ[v.zone] = (byZ[v.zone] || 0) + 1;
     (v.problems || []).forEach(p => byP[p] = (byP[p] || 0) + 1);
@@ -328,7 +473,7 @@ function renderCharts() {
   const maxP = topP.length ? topP[0][1] : 1;
   const sCols = { 'Resuelto': '#3B6D11', 'En proceso': '#185FA5', 'Pendiente': '#854F0B' };
   const sBars = Object.entries(byS).map(([k, v]) =>
-    `<div class="bar-row"><div class="bar-lbl">${k}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v / visits.length * 100)}%;background:${sCols[k] || '#888'}"><span>${v}</span></div></div><div class="bar-pct">${Math.round(v / visits.length * 100)}%</div></div>`
+    `<div class="bar-row"><div class="bar-lbl">${k}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v / data.length * 100)}%;background:${sCols[k] || '#888'}"><span>${v}</span></div></div><div class="bar-pct">${Math.round(v / data.length * 100)}%</div></div>`
   ).join('');
   const pBars = topP.map(([k, v]) =>
     `<div class="bar-row"><div class="bar-lbl">${k}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v / maxP * 100)}%;background:#B03A2E"><span>${v}</span></div></div></div>`
@@ -336,7 +481,7 @@ function renderCharts() {
   const zCards = Object.entries(byZ).sort((a, b) => b[1] - a[1]).map(([z, c]) =>
     `<div class="zone-card"><div class="zone-num">${c}</div><div class="zone-nm">${z}</div></div>`
   ).join('');
-  const satArr = visits.filter(v => v.satisfaccion);
+  const satArr = data.filter(v => v.satisfaccion);
   const satAvg = satArr.length ? (satArr.reduce((s, v) => s + (v.satisfaccion || 0), 0) / satArr.length).toFixed(1) : '—';
   const maxSat = Math.max(...bySat, 1);
   el.innerHTML = `

@@ -100,6 +100,23 @@ tr:hover td{background:#fafaf9}
 .form-footer{display:flex;justify-content:space-between;align-items:center;padding-top:16px;border-top:1px solid #eee;margin-top:8px}
 .form-footer .hint{font-size:11px;color:#aaa}
 
+/* PHOTOS */
+.photo-grid{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.photo-thumb{position:relative;width:92px;height:92px;border-radius:7px;overflow:hidden;border:1px solid #e8e4df;background:#f0ede8}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;cursor:zoom-in;display:block}
+.photo-rm{position:absolute;top:3px;right:3px;background:rgba(0,0,0,.6);color:white;border:none;width:20px;height:20px;border-radius:50%;font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.photo-rm:hover{background:rgba(0,0,0,.85)}
+.photo-thumb .photo-status{position:absolute;inset:0;background:rgba(255,255,255,.75);display:flex;align-items:center;justify-content:center;font-size:10px;color:#666}
+.photo-empty{font-size:12px;color:#999;margin-top:8px}
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:1000;cursor:zoom-out;padding:30px}
+.lightbox.show{display:flex}
+.lightbox img{max-width:100%;max-height:100%;border-radius:6px;box-shadow:0 10px 40px rgba(0,0,0,.4)}
+
+/* CHART FILTERS */
+.filter-row{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+@media(max-width:900px){.filter-row{grid-template-columns:1fr 1fr 1fr}}
+@media(max-width:700px){.filter-row{grid-template-columns:1fr 1fr}}
+
 /* CHARTS */
 .ch-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
 .ch-card{background:white;border-radius:8px;border:1px solid #e8e4df;padding:18px}
@@ -187,11 +204,11 @@ tr:hover td{background:#fafaf9}
         <thead>
           <tr>
             <th>Código</th><th>Cliente</th><th>Zona</th><th>Hallazgos</th>
-            <th>Problemas</th><th>Acciones clave</th><th>Estado</th><th></th>
+            <th>Problemas</th><th>Acciones clave</th><th>Fotos</th><th>Estado</th><th></th>
           </tr>
         </thead>
         <tbody id="tbl-body">
-          <tr><td colspan="8"><div class="empty-state">Cargando visitas...</div></td></tr>
+          <tr><td colspan="9"><div class="empty-state">Cargando visitas...</div></td></tr>
         </tbody>
       </table>
     </div>
@@ -200,6 +217,31 @@ tr:hover td{background:#fafaf9}
   <!-- CHARTS -->
   <div id="page-charts" class="page">
     <h2 style="margin-bottom:16px;font-size:18px;font-weight:600">Gráficos y estadísticas</h2>
+
+    <div class="form-section">
+      <div class="sec-title"><i class="ti ti-filter"></i> Filtros</div>
+      <div class="filter-row">
+        <div class="fg"><label>Fecha inicio</label><input type="date" id="cf-date-start"></div>
+        <div class="fg"><label>Fecha fin</label><input type="date" id="cf-date-end"></div>
+        <div class="fg"><label>Estado</label>
+          <select id="cf-status">
+            <option value="">— Todos —</option>
+            <option>Resuelto</option><option>En proceso</option><option>Pendiente</option>
+          </select>
+        </div>
+        <div class="fg"><label>Zona</label><select id="cf-zone"><option value="">— Todas —</option></select></div>
+        <div class="fg"><label>Problema identificado</label><select id="cf-problem"><option value="">— Todos —</option></select></div>
+        <div class="fg"><label>Agente responsable</label><select id="cf-agent"><option value="">— Todos —</option></select></div>
+      </div>
+      <div class="form-footer">
+        <span class="hint" id="cf-count"></span>
+        <div style="display:flex;gap:8px">
+          <button class="btn-back" onclick="resetChartFilters()">Limpiar filtros</button>
+          <button class="btn-red" onclick="applyChartFilters()"><i class="ti ti-filter"></i> Aplicar filtros</button>
+        </div>
+      </div>
+    </div>
+
     <div id="charts-inner"></div>
   </div>
 
@@ -266,9 +308,29 @@ tr:hover td{background:#fafaf9}
       </div>
     </div>
 
-    <!-- SEC 4 -->
+    <!-- SEC FOTOS -->
     <div class="form-section">
-      <div class="sec-title"><i class="ti ti-package"></i> 4. Pedido / negocio realizado</div>
+      <div class="sec-title"><i class="ti ti-camera"></i> 4. Evidencia fotográfica</div>
+      <div class="fg">
+        <label>Agregar fotos de la visita</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+          <button type="button" class="btn-add" onclick="document.getElementById('f-photo-camera').click()">
+            <i class="ti ti-camera"></i> Tomar foto
+          </button>
+          <button type="button" class="btn-add" style="background:#1A5276" onclick="document.getElementById('f-photo-gallery').click()">
+            <i class="ti ti-photo"></i> Elegir de galería
+          </button>
+        </div>
+        <input type="file" id="f-photo-camera" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoSelect(event)">
+        <input type="file" id="f-photo-gallery" accept="image/*" multiple style="display:none" onchange="handlePhotoSelect(event)">
+      </div>
+      <div class="photo-grid" id="photo-grid"></div>
+      <div class="photo-empty" id="photo-empty">Aún no hay fotos agregadas.</div>
+    </div>
+
+    <!-- SEC 5 -->
+    <div class="form-section">
+      <div class="sec-title"><i class="ti ti-package"></i> 5. Pedido / negocio realizado</div>
       <div style="display:grid;grid-template-columns:1fr .6fr 1fr 32px;gap:10px;margin-bottom:8px">
         <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px">Categoría / Línea</span>
         <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px">Monto (₡)</span>
@@ -281,7 +343,7 @@ tr:hover td{background:#fafaf9}
 
     <!-- SEC 5 -->
     <div class="form-section">
-      <div class="sec-title"><i class="ti ti-checkbox"></i> 5. Acciones y compromisos</div>
+      <div class="sec-title"><i class="ti ti-checkbox"></i> 6. Acciones y compromisos</div>
       <div style="display:grid;grid-template-columns:1fr .6fr .6fr .6fr 32px;gap:10px;margin-bottom:8px">
         <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px">Acción a ejecutar</span>
         <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px">Responsable</span>
@@ -295,7 +357,7 @@ tr:hover td{background:#fafaf9}
 
     <!-- SEC 6 -->
     <div class="form-section">
-      <div class="sec-title"><i class="ti ti-checklist"></i> 6. Evaluación y cierre</div>
+      <div class="sec-title"><i class="ti ti-checklist"></i> 7. Evaluación y cierre</div>
       <div class="grid-3">
         <div class="fg">
           <label>¿Se realizó pedido?</label>
@@ -331,6 +393,10 @@ tr:hover td{background:#fafaf9}
 </div>
 
 <div class="toast" id="toast"></div>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <img id="lightbox-img" src="" alt="Evidencia fotográfica">
+</div>
 
 <script src="config.js"></script>
 <script src="app.js"></script>
