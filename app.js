@@ -181,13 +181,70 @@ function removePhoto(i) {
   renderPhotoGrid();
 }
 
-function openLightbox(src) {
-  document.getElementById('lightbox-img').src = src;
+// ── GALERÍA / LIGHTBOX ────────────────────────────────────
+let galleryPhotos = [];
+let galleryIndex = 0;
+
+function openGallery(photos, startIndex = 0) {
+  galleryPhotos = photos;
+  galleryIndex = startIndex;
+  renderGallery();
   document.getElementById('lightbox').classList.add('show');
+}
+
+function renderGallery() {
+  const src = galleryPhotos[galleryIndex];
+  const isDrive = src && src.includes('drive.google.com');
+  const lb = document.getElementById('lightbox');
+  const total = galleryPhotos.length;
+
+  lb.innerHTML = `
+    <div onclick="event.stopPropagation()" style="position:relative;max-width:92vw;max-height:90vh;display:flex;flex-direction:column;align-items:center;gap:12px">
+      ${isDrive
+        ? `<div style="background:#1e1e1e;border-radius:8px;padding:40px 60px;text-align:center">
+            <div style="font-size:48px;margin-bottom:12px">🖼️</div>
+            <div style="color:white;font-size:15px;margin-bottom:18px">La foto está guardada en Google Drive</div>
+            <a href="${src}" target="_blank" rel="noopener"
+               style="background:#D4832A;color:white;padding:10px 22px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px">
+              <i class="ti ti-external-link"></i> Abrir foto en Drive
+            </a>
+          </div>`
+        : `<img src="${src}" alt="Evidencia ${galleryIndex + 1}"
+              style="max-width:88vw;max-height:78vh;border-radius:8px;object-fit:contain;box-shadow:0 8px 32px rgba(0,0,0,.5)"
+              onerror="this.outerHTML='<div style=\\'background:#1e1e1e;border-radius:8px;padding:40px 60px;text-align:center\\'><div style=\\'font-size:48px;margin-bottom:12px\\'>🖼️</div><div style=\\'color:white;font-size:15px;margin-bottom:18px\\'>No se puede mostrar la imagen aquí</div><a href=\\'${src.replace(/'/g, "\\'")}\\' target=\\'_blank\\' style=\\'background:#D4832A;color:white;padding:10px 22px;border-radius:6px;text-decoration:none;font-weight:600\\'>Abrir foto</a></div>'">`
+      }
+      <div style="display:flex;align-items:center;gap:16px">
+        ${total > 1 ? `
+          <button onclick="galleryPrev()" style="background:rgba(255,255,255,.15);border:none;color:white;width:38px;height:38px;border-radius:50%;font-size:18px;cursor:pointer">‹</button>
+        ` : ''}
+        <span style="color:rgba(255,255,255,.7);font-size:13px">
+          ${total > 1 ? `Foto ${galleryIndex + 1} de ${total}` : 'Evidencia fotográfica'}
+        </span>
+        ${total > 1 ? `
+          <button onclick="galleryNext()" style="background:rgba(255,255,255,.15);border:none;color:white;width:38px;height:38px;border-radius:50%;font-size:18px;cursor:pointer">›</button>
+        ` : ''}
+        <button onclick="closeLightbox()" style="background:rgba(255,255,255,.15);border:none;color:white;width:38px;height:38px;border-radius:50%;font-size:14px;cursor:pointer">✕</button>
+      </div>
+    </div>`;
+}
+
+function galleryPrev() {
+  galleryIndex = (galleryIndex - 1 + galleryPhotos.length) % galleryPhotos.length;
+  renderGallery();
+}
+
+function galleryNext() {
+  galleryIndex = (galleryIndex + 1) % galleryPhotos.length;
+  renderGallery();
+}
+
+function openLightbox(src) {
+  openGallery([src], 0);
 }
 
 function closeLightbox() {
   document.getElementById('lightbox').classList.remove('show');
+  document.getElementById('lightbox').innerHTML = '';
 }
 
 // ── FORMULARIO ────────────────────────────────────────────
@@ -399,8 +456,9 @@ function renderTable() {
 // ── VER FOTOS DE UNA VISITA (desde la tabla) ──────────────
 function viewVisitPhotos(id) {
   const v = visits.find(x => x.id === id);
-  if (!v || !(v.fotos || []).length) return;
-  openLightbox(v.fotos[0]);
+  const fotos = (v && v.fotos || []).filter(Boolean);
+  if (!fotos.length) return;
+  openGallery(fotos, 0);
 }
 
 // ── FILTROS DE GRÁFICOS ───────────────────────────────────
