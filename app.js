@@ -194,38 +194,52 @@ function openGallery(photos, startIndex = 0) {
 
 function renderGallery() {
   const src = galleryPhotos[galleryIndex];
-  const isDrive = src && src.includes('drive.google.com');
   const lb = document.getElementById('lightbox');
   const total = galleryPhotos.length;
 
-  lb.innerHTML = `
-    <div onclick="event.stopPropagation()" style="position:relative;max-width:92vw;max-height:90vh;display:flex;flex-direction:column;align-items:center;gap:12px">
-      ${isDrive
-        ? `<div style="background:#1e1e1e;border-radius:8px;padding:40px 60px;text-align:center">
-            <div style="font-size:48px;margin-bottom:12px">🖼️</div>
-            <div style="color:white;font-size:15px;margin-bottom:18px">La foto está guardada en Google Drive</div>
-            <a href="${src}" target="_blank" rel="noopener"
-               style="background:#D4832A;color:white;padding:10px 22px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px">
-              <i class="ti ti-external-link"></i> Abrir foto en Drive
-            </a>
-          </div>`
-        : `<img src="${src}" alt="Evidencia ${galleryIndex + 1}"
-              style="max-width:88vw;max-height:78vh;border-radius:8px;object-fit:contain;box-shadow:0 8px 32px rgba(0,0,0,.5)"
-              onerror="this.outerHTML='<div style=\\'background:#1e1e1e;border-radius:8px;padding:40px 60px;text-align:center\\'><div style=\\'font-size:48px;margin-bottom:12px\\'>🖼️</div><div style=\\'color:white;font-size:15px;margin-bottom:18px\\'>No se puede mostrar la imagen aquí</div><a href=\\'${src.replace(/'/g, "\\'")}\\' target=\\'_blank\\' style=\\'background:#D4832A;color:white;padding:10px 22px;border-radius:6px;text-decoration:none;font-weight:600\\'>Abrir foto</a></div>'">`
-      }
-      <div style="display:flex;align-items:center;gap:16px">
-        ${total > 1 ? `
-          <button onclick="galleryPrev()" style="background:rgba(255,255,255,.15);border:none;color:white;width:38px;height:38px;border-radius:50%;font-size:18px;cursor:pointer">‹</button>
-        ` : ''}
-        <span style="color:rgba(255,255,255,.7);font-size:13px">
-          ${total > 1 ? `Foto ${galleryIndex + 1} de ${total}` : 'Evidencia fotográfica'}
-        </span>
-        ${total > 1 ? `
-          <button onclick="galleryNext()" style="background:rgba(255,255,255,.15);border:none;color:white;width:38px;height:38px;border-radius:50%;font-size:18px;cursor:pointer">›</button>
-        ` : ''}
-        <button onclick="closeLightbox()" style="background:rgba(255,255,255,.15);border:none;color:white;width:38px;height:38px;border-radius:50%;font-size:14px;cursor:pointer">✕</button>
-      </div>
+  // Extraer el ID del archivo de Drive para usar la URL de thumbnail
+  // que sí funciona en todos los navegadores
+  let displaySrc = src;
+  let driveFileId = null;
+  if (src && src.includes('drive.google.com')) {
+    const m = src.match(/[?&]id=([^&]+)/);
+    if (m) {
+      driveFileId = m[1];
+      // URL de thumbnail de Google que funciona en desktop y mobile
+      displaySrc = `https://drive.google.com/thumbnail?id=${driveFileId}&sz=w1280`;
+    }
+  }
+
+  const navBtns = `
+    <div style="display:flex;align-items:center;gap:16px;margin-top:10px">
+      ${total > 1 ? `<button onclick="galleryPrev()" style="background:rgba(255,255,255,.15);border:none;color:white;width:38px;height:38px;border-radius:50%;font-size:20px;cursor:pointer">‹</button>` : ''}
+      <span style="color:rgba(255,255,255,.7);font-size:13px">${total > 1 ? `Foto ${galleryIndex + 1} de ${total}` : 'Evidencia fotográfica'}</span>
+      ${total > 1 ? `<button onclick="galleryNext()" style="background:rgba(255,255,255,.15);border:none;color:white;width:38px;height:38px;border-radius:50%;font-size:20px;cursor:pointer">›</button>` : ''}
+      ${driveFileId ? `<a href="https://drive.google.com/file/d/${driveFileId}/view" target="_blank" rel="noopener" style="background:rgba(255,255,255,.15);color:white;width:38px;height:38px;border-radius:50%;font-size:14px;display:flex;align-items:center;justify-content:center;text-decoration:none" title="Abrir en Drive">↗</a>` : ''}
+      <button onclick="closeLightbox()" style="background:rgba(255,255,255,.15);border:none;color:white;width:38px;height:38px;border-radius:50%;font-size:16px;cursor:pointer">✕</button>
     </div>`;
+
+  lb.innerHTML = `
+    <div onclick="event.stopPropagation()" style="position:relative;max-width:92vw;max-height:90vh;display:flex;flex-direction:column;align-items:center">
+      <img id="gallery-img" src="${displaySrc}" alt="Evidencia ${galleryIndex + 1}"
+        style="max-width:88vw;max-height:78vh;border-radius:8px;object-fit:contain;box-shadow:0 8px 32px rgba(0,0,0,.5)"
+        onerror="document.getElementById('gallery-img').style.display='none';document.getElementById('gallery-fallback').style.display='flex'">
+      <div id="gallery-fallback" style="display:none;background:#1e1e1e;border-radius:8px;padding:40px 60px;text-align:center;flex-direction:column;align-items:center;gap:14px">
+        <div style="font-size:48px">🖼️</div>
+        <div style="color:white;font-size:15px">No se puede mostrar la imagen aquí</div>
+        ${driveFileId
+          ? `<a href="https://drive.google.com/file/d/${driveFileId}/view" target="_blank" rel="noopener"
+               style="background:#D4832A;color:white;padding:10px 22px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px">
+               ↗ Abrir foto en Drive
+             </a>`
+          : `<a href="${src}" target="_blank" rel="noopener"
+               style="background:#D4832A;color:white;padding:10px 22px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px">
+               ↗ Abrir foto
+             </a>`
+        }
+      </div>
+      ${navBtns}
+    </div>`; 
 }
 
 function galleryPrev() {
@@ -405,7 +419,7 @@ async function loadVisits() {
 
 // ── EDITAR ────────────────────────────────────────────────
 function editVisit(id) {
-  const v = visits.find(x => x.id === id);
+  const v = visits.find(x => String(x.id) === String(id));
   if (!v) return;
   editId = id;
   populateForm(v);
@@ -455,7 +469,7 @@ function renderTable() {
 
 // ── VER FOTOS DE UNA VISITA (desde la tabla) ──────────────
 function viewVisitPhotos(id) {
-  const v = visits.find(x => x.id === id);
+  const v = visits.find(x => String(x.id) === String(id));
   const fotos = (v && v.fotos || []).filter(Boolean);
   if (!fotos.length) return;
   openGallery(fotos, 0);
