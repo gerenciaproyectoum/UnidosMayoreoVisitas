@@ -184,62 +184,99 @@ function removePhoto(i) {
 // ── GALERÍA / LIGHTBOX ────────────────────────────────────
 let galleryPhotos = [];
 let galleryIndex = 0;
+let galleryClientName = '';
 
-function openGallery(photos, startIndex = 0) {
+function getDisplaySrc(src) {
+  if (!src) return '';
+  if (src.includes('drive.google.com')) {
+    // Formato /file/d/ID/view
+    let m = src.match(/\/file\/d\/([^\/]+)/);
+    if (m) return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w1280`;
+    // Formato ?id=ID
+    m = src.match(/[?&]id=([^&]+)/);
+    if (m) return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w1280`;
+  }
+  return src;
+}
+
+function getDriveFileId(src) {
+  if (!src || !src.includes('drive.google.com')) return null;
+  let m = src.match(/\/file\/d\/([^\/]+)/);
+  if (m) return m[1];
+  m = src.match(/[?&]id=([^&]+)/);
+  return m ? m[1] : null;
+}
+
+function openGallery(photos, startIndex = 0, clientName = '') {
   galleryPhotos = photos;
   galleryIndex = startIndex;
+  galleryClientName = clientName;
   renderGallery();
   document.getElementById('lightbox').classList.add('show');
+  document.addEventListener('keydown', galleryKeyHandler);
+}
+
+function galleryKeyHandler(e) {
+  if (e.key === 'ArrowLeft') galleryPrev();
+  else if (e.key === 'ArrowRight') galleryNext();
+  else if (e.key === 'Escape') closeLightbox();
 }
 
 function renderGallery() {
   const src = galleryPhotos[galleryIndex];
   const lb = document.getElementById('lightbox');
   const total = galleryPhotos.length;
+  const displaySrc = getDisplaySrc(src);
+  const driveFileId = getDriveFileId(src);
 
-  // Extraer el ID del archivo de Drive para usar la URL de thumbnail
-  // que sí funciona en todos los navegadores
-  let displaySrc = src;
-  let driveFileId = null;
-  if (src && src.includes('drive.google.com')) {
-    const m = src.match(/[?&]id=([^&]+)/);
-    if (m) {
-      driveFileId = m[1];
-      // URL de thumbnail de Google que funciona en desktop y mobile
-      displaySrc = `https://drive.google.com/thumbnail?id=${driveFileId}&sz=w1280`;
-    }
-  }
-
-  const navBtns = `
-    <div style="display:flex;align-items:center;gap:16px;margin-top:10px">
-      ${total > 1 ? `<button onclick="galleryPrev()" style="background:rgba(255,255,255,.15);border:none;color:white;width:38px;height:38px;border-radius:50%;font-size:20px;cursor:pointer">‹</button>` : ''}
-      <span style="color:rgba(255,255,255,.7);font-size:13px">${total > 1 ? `Foto ${galleryIndex + 1} de ${total}` : 'Evidencia fotográfica'}</span>
-      ${total > 1 ? `<button onclick="galleryNext()" style="background:rgba(255,255,255,.15);border:none;color:white;width:38px;height:38px;border-radius:50%;font-size:20px;cursor:pointer">›</button>` : ''}
-      ${driveFileId ? `<a href="https://drive.google.com/file/d/${driveFileId}/view" target="_blank" rel="noopener" style="background:rgba(255,255,255,.15);color:white;width:38px;height:38px;border-radius:50%;font-size:14px;display:flex;align-items:center;justify-content:center;text-decoration:none" title="Abrir en Drive">↗</a>` : ''}
-      <button onclick="closeLightbox()" style="background:rgba(255,255,255,.15);border:none;color:white;width:38px;height:38px;border-radius:50%;font-size:16px;cursor:pointer">✕</button>
-    </div>`;
+  // Build thumbnails strip
+  const strip = total > 1 ? `
+    <div class="lb-strip">
+      ${galleryPhotos.map((p, i) => {
+        const tSrc = getDisplaySrc(p);
+        return `<div class="lb-thumb ${i === galleryIndex ? 'active' : ''}" onclick="galleryGoto(${i})">
+          <img src="${tSrc}" alt="Foto ${i+1}"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="lb-thumb-fallback" style="display:none">📷</div>
+        </div>`;
+      }).join('')}
+    </div>` : '';
 
   lb.innerHTML = `
-    <div onclick="event.stopPropagation()" style="position:relative;max-width:92vw;max-height:90vh;display:flex;flex-direction:column;align-items:center">
-      <img id="gallery-img" src="${displaySrc}" alt="Evidencia ${galleryIndex + 1}"
-        style="max-width:88vw;max-height:78vh;border-radius:8px;object-fit:contain;box-shadow:0 8px 32px rgba(0,0,0,.5)"
-        onerror="document.getElementById('gallery-img').style.display='none';document.getElementById('gallery-fallback').style.display='flex'">
-      <div id="gallery-fallback" style="display:none;background:#1e1e1e;border-radius:8px;padding:40px 60px;text-align:center;flex-direction:column;align-items:center;gap:14px">
-        <div style="font-size:48px">🖼️</div>
-        <div style="color:white;font-size:15px">No se puede mostrar la imagen aquí</div>
-        ${driveFileId
-          ? `<a href="https://drive.google.com/file/d/${driveFileId}/view" target="_blank" rel="noopener"
-               style="background:#D4832A;color:white;padding:10px 22px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px">
-               ↗ Abrir foto en Drive
-             </a>`
-          : `<a href="${src}" target="_blank" rel="noopener"
-               style="background:#D4832A;color:white;padding:10px 22px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px">
-               ↗ Abrir foto
-             </a>`
-        }
+    <div onclick="event.stopPropagation()" style="display:flex;flex-direction:column;align-items:center;width:100%;max-width:900px">
+      <div class="lb-header">
+        <div class="lb-title">
+          <i class="ti ti-camera"></i>
+          Evidencia fotográfica${galleryClientName ? ' · ' + galleryClientName : ''}
+        </div>
+        <button class="lb-close" onclick="closeLightbox()" title="Cerrar (Esc)">✕</button>
       </div>
-      ${navBtns}
-    </div>`; 
+      <div class="lb-main">
+        ${total > 1 ? `<button class="lb-nav lb-prev" onclick="galleryPrev()" title="Anterior">‹</button>` : ''}
+        <div class="lb-img-wrap">
+          <img id="gallery-img" src="${displaySrc}" alt="Evidencia ${galleryIndex + 1}"
+            onerror="document.getElementById('gallery-img').style.display='none';document.getElementById('gallery-fallback').style.display='flex'">
+          <div id="gallery-fallback" class="lb-fallback">
+            <div class="lb-icon">🖼️</div>
+            <p>No se puede previsualizar esta imagen</p>
+            ${driveFileId
+              ? `<a href="https://drive.google.com/file/d/${driveFileId}/view" target="_blank" rel="noopener">↗ Abrir en Google Drive</a>`
+              : src ? `<a href="${src}" target="_blank" rel="noopener">↗ Abrir imagen</a>` : ''
+            }
+          </div>
+        </div>
+        ${total > 1 ? `<button class="lb-nav lb-next" onclick="galleryNext()" title="Siguiente">›</button>` : ''}
+      </div>
+      <div class="lb-counter">${total > 1 ? `Foto ${galleryIndex + 1} de ${total}` : 'Evidencia fotográfica'}
+        ${driveFileId ? ` · <a href="https://drive.google.com/file/d/${driveFileId}/view" target="_blank" rel="noopener" style="color:#5DADE2;text-decoration:none">↗ Ver en Drive</a>` : ''}
+      </div>
+      ${strip}
+    </div>`;
+}
+
+function galleryGoto(i) {
+  galleryIndex = i;
+  renderGallery();
 }
 
 function galleryPrev() {
@@ -259,6 +296,11 @@ function openLightbox(src) {
 function closeLightbox() {
   document.getElementById('lightbox').classList.remove('show');
   document.getElementById('lightbox').innerHTML = '';
+  document.removeEventListener('keydown', galleryKeyHandler);
+}
+
+function handleLightboxBackdropClick(e) {
+  if (e.target === document.getElementById('lightbox')) closeLightbox();
 }
 
 // ── FORMULARIO ────────────────────────────────────────────
@@ -451,8 +493,8 @@ function renderTable() {
     const sat = v.satisfaccion ? '⭐'.repeat(v.satisfaccion) : '—';
     const nFotos = (v.fotos || []).filter(Boolean).length;
     const fotosCell = nFotos
-      ? `<span class="badge" style="background:#E6F1FB;color:#185FA5;cursor:pointer" onclick="viewVisitPhotos('${v.id}')"><i class="ti ti-camera"></i> ${nFotos}</span>`
-      : '<span style="color:#bbb;font-size:11px">—</span>';
+      ? `<span class="foto-badge" onclick="viewVisitPhotos('${v.id}')" title="Ver ${nFotos} foto${nFotos > 1 ? 's' : ''} de evidencia"><i class="ti ti-camera"></i> ${nFotos} foto${nFotos > 1 ? 's' : ''}</span>`
+      : '<span class="foto-none">—</span>';
     return `<tr>
       <td><span class="code">${v.code}</span></td>
       <td><div class="cl-name">${v.name}</div><div class="cl-sub">${v.type || ''}</div><div class="cl-sub">${v.date || ''}</div></td>
@@ -472,7 +514,7 @@ function viewVisitPhotos(id) {
   const v = visits.find(x => String(x.id) === String(id));
   const fotos = (v && v.fotos || []).filter(Boolean);
   if (!fotos.length) return;
-  openGallery(fotos, 0);
+  openGallery(fotos, 0, v.name || '');
 }
 
 // ── FILTROS DE GRÁFICOS ───────────────────────────────────
