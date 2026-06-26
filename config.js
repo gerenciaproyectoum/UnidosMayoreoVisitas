@@ -1,13 +1,9 @@
 // ============================================================
-//  CONFIGURACIÓN - UNIDOS MAYOREO
-//  Reemplaza la URL de abajo con la de tu Google Apps Script
+//  CONFIGURACIÓN — Unidos Mayoreo · Supabase
 // ============================================================
-
 const CONFIG = {
-  // Paso 1: Crea tu Google Apps Script siguiendo INSTRUCCIONES.md
-  // Paso 2: Reemplaza esta URL con la tuya:
-  SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbw-Y85aRoJlusPXNAYKQwuSGa5oBJJZB95QS6DSJUmueqGRZQ_7jjikoU5Ea8dgEri0pA/exec',
-
-  // Nombre de la hoja en Google Sheets (no cambiar si usas el script incluido)
-  SHEET_NAME: 'Visitas'
+  SUPABASE_URL: 'https://pnadhybkmdgctwfugxhg.supabase.co',
+  SUPABASE_KEY: 'sb_publishable_Z2dLWOE1uoCAxfzwn_oo-Q_Zn2dIyAk',
+  STORAGE_BUCKET: 'visitas-fotos'
 };
+
