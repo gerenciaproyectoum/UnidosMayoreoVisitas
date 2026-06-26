@@ -5,65 +5,49 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Unidos Mayoreo · Sistema de Visitas</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',Arial,sans-serif;background:#f0ede8;color:#1a1a1a;min-height:100vh}
-.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#7B241C 0%,#B03A2E 50%,#D4832A 100%)}
-.login-box{background:white;border-radius:14px;padding:40px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
-.login-logo{text-align:center;margin-bottom:28px}
-.login-logo h1{font-size:22px;font-weight:700;color:#B03A2E;letter-spacing:.5px}
-.login-logo p{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-top:3px}
-.login-logo .icon{width:60px;height:60px;background:#B03A2E;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:26px;color:white}
-.login-field{margin-bottom:16px}
-.login-field label{display:block;font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
-.login-field input{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:7px;font-size:14px;transition:border-color .15s}
-.login-field input:focus{outline:none;border-color:#B03A2E;box-shadow:0 0 0 3px rgba(176,58,46,.1)}
-.login-btn{width:100%;background:#B03A2E;color:white;border:none;padding:12px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;transition:background .15s;display:flex;align-items:center;justify-content:center;gap:8px}
-.login-btn:hover{background:#922B21}
-.login-btn:disabled{background:#ccc;cursor:not-allowed}
-.login-err{background:#FAECE7;color:#993C1D;padding:10px 14px;border-radius:7px;font-size:13px;margin-bottom:16px;display:none}
-.login-err.show{display:block}
-.header{background:#B03A2E;color:white;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
+/* HEADER */
+.header{background:#B03A2E;color:white;padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
 .header-left h1{font-size:17px;font-weight:600;letter-spacing:.5px}
 .header-left p{font-size:10px;opacity:.8;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
-.header-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.15);padding:6px 12px;border-radius:20px;font-size:12px}
-.user-avatar{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
-.btn-logout{background:rgba(255,255,255,.15);border:none;color:white;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:5px}
-.btn-logout:hover{background:rgba(255,255,255,.25)}
-.visit-count .num{font-size:26px;font-weight:600;line-height:1;text-align:right}
+.visit-count .num{font-size:32px;font-weight:600;line-height:1;text-align:right}
 .visit-count .lbl{font-size:10px;opacity:.8;text-transform:uppercase;letter-spacing:.5px;text-align:right}
-.nav{background:#922B21;display:flex;padding:0 20px;overflow-x:auto}
-.nav button{background:none;border:none;color:rgba(255,255,255,.65);padding:11px 16px;cursor:pointer;font-size:13px;border-bottom:3px solid transparent;transition:all .15s;display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0}
+
+/* NAV */
+.nav{background:#922B21;display:flex;padding:0 20px}
+.nav button{background:none;border:none;color:rgba(255,255,255,.65);padding:11px 18px;cursor:pointer;font-size:13px;border-bottom:3px solid transparent;transition:all .15s;display:flex;align-items:center;gap:6px}
 .nav button.active{color:white;border-bottom-color:white}
 .nav button:hover{color:white}
-.nav-sep{border-left:1px solid rgba(255,255,255,.2);margin:6px 8px;align-self:stretch}
-.content{padding:20px;max-width:1200px;margin:0 auto}
+
+/* LAYOUT */
+.content{padding:20px;max-width:1100px;margin:0 auto}
 .page{display:none}.page.active{display:block}
-.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px}
-.page-header h2{font-size:18px;font-weight:600;display:flex;align-items:center;gap:8px}
+.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.page-header h2{font-size:18px;font-weight:600}
+
+/* BUTTONS */
 .btn-red{background:#B03A2E;color:white;border:none;padding:9px 18px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
 .btn-red:hover{background:#922B21}
-.btn-blue{background:#1A5276;color:white;border:none;padding:9px 18px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
-.btn-blue:hover{background:#154360}
 .btn-back{background:none;border:1px solid #ccc;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px;color:#555}
 .btn-back:hover{background:#eee}
 .btn-add{background:#1A5276;color:white;border:none;padding:7px 14px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600;margin-top:4px;display:inline-flex;align-items:center;gap:5px}
 .btn-save{background:#566573;color:white;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;transition:background .15s}
 .btn-save:hover{background:#B03A2E}
 .btn-rm{background:#FAECE7;color:#993C1D;border:none;width:28px;height:28px;border-radius:5px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.btn-sm{padding:4px 10px;border-radius:5px;cursor:pointer;font-size:11px;border:1px solid #ccc;background:white;color:#555;display:inline-flex;align-items:center;gap:3px}
-.btn-sm:hover{background:#f5f5f5}
-.btn-sm.red{border-color:#993C1D;color:#993C1D}.btn-sm.red:hover{background:#FAECE7}
-.btn-sm.blue{border-color:#185FA5;color:#185FA5}.btn-sm.blue:hover{background:#E6F1FB}
+
+/* METRICS */
 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
 .metric{background:white;border-radius:8px;padding:14px 16px;border:1px solid #e8e4df}
 .metric-lbl{font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
 .metric-val{font-size:26px;font-weight:600}
-.tbl-wrap{background:white;border-radius:8px;border:1px solid #e8e4df;overflow:hidden;overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:12px;min-width:600px}
-th{background:#B03A2E;color:white;padding:10px 12px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+
+/* TABLE */
+.tbl-wrap{background:white;border-radius:8px;border:1px solid #e8e4df;overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#B03A2E;color:white;padding:10px 12px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
 td{padding:11px 12px;border-bottom:1px solid #f0ede8;vertical-align:top}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:#fafaf9}
@@ -83,9 +67,8 @@ tr:hover td{background:#fafaf9}
 .edit-btn{background:none;border:1px solid #ccc;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:11px;color:#666;display:inline-flex;align-items:center;gap:3px}
 .edit-btn:hover{background:#f5f5f5}
 .empty-state{text-align:center;padding:48px;color:#888;font-size:14px}
-.foto-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:14px;font-size:12px;font-weight:600;background:#E8F4FD;color:#1A6599;border:1px solid #B8D9F0;cursor:pointer;transition:all .15s;user-select:none}
-.foto-badge:hover{background:#C8E4F7;border-color:#1A6599;transform:translateY(-1px)}
-.foto-none{color:#ccc;font-size:11px}
+
+/* FORM */
 .form-section{background:white;border-radius:8px;border:1px solid #e8e4df;padding:20px;margin-bottom:16px}
 .sec-title{font-size:13px;font-weight:700;color:#B03A2E;text-transform:uppercase;letter-spacing:.5px;padding-bottom:12px;border-bottom:2px solid #B03A2E;margin-bottom:18px;display:flex;align-items:center;gap:8px}
 .fg{display:flex;flex-direction:column;gap:5px}
@@ -96,64 +79,73 @@ tr:hover td{background:#fafaf9}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
 .full{grid-column:1/-1}
+
+/* PILLS */
 .pill-group{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
 .pill{padding:6px 14px;border-radius:20px;border:1px solid #ccc;cursor:pointer;font-size:12px;background:white;color:#333;transition:all .12s;user-select:none}
 .pill.on{background:#B03A2E;color:white;border-color:#B03A2E}
+
+/* DYNAMIC ROWS */
 .dyn-row{display:grid;gap:10px;align-items:center;margin-bottom:8px}
 .dyn-row-3{grid-template-columns:1fr .6fr 1fr 32px}
 .dyn-row-4{grid-template-columns:1fr .6fr .6fr .6fr 32px}
 .dyn-row input,.dyn-row select{padding:7px 10px;border:1px solid #ccc;border-radius:5px;font-size:13px;font-family:inherit}
 .dyn-row input:focus,.dyn-row select:focus{outline:none;border-color:#B03A2E}
+
+/* STARS */
 .stars{display:flex;gap:8px;margin-top:6px}
 .star{width:34px;height:34px;border-radius:50%;border:1px solid #ccc;background:white;cursor:pointer;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .12s}
 .star.on{background:#D4832A;color:white;border-color:#D4832A}
+
 .form-footer{display:flex;justify-content:space-between;align-items:center;padding-top:16px;border-top:1px solid #eee;margin-top:8px}
 .form-footer .hint{font-size:11px;color:#aaa}
+
+/* PHOTOS */
 .photo-grid{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
 .photo-thumb{position:relative;width:92px;height:92px;border-radius:7px;overflow:hidden;border:1px solid #e8e4df;background:#f0ede8}
 .photo-thumb img{width:100%;height:100%;object-fit:cover;cursor:zoom-in;display:block}
 .photo-rm{position:absolute;top:3px;right:3px;background:rgba(0,0,0,.6);color:white;border:none;width:20px;height:20px;border-radius:50%;font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.photo-rm:hover{background:rgba(0,0,0,.85)}
+.photo-thumb .photo-status{position:absolute;inset:0;background:rgba(255,255,255,.75);display:flex;align-items:center;justify-content:center;font-size:10px;color:#666}
 .photo-empty{font-size:12px;color:#999;margin-top:8px}
-.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:2000;padding:16px}
+/* PHOTO BADGE */
+.foto-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:14px;font-size:12px;font-weight:600;background:#E8F4FD;color:#1A6599;border:1px solid #B8D9F0;cursor:pointer;transition:all .15s;user-select:none}
+.foto-badge:hover{background:#C8E4F7;border-color:#1A6599;transform:translateY(-1px);box-shadow:0 2px 8px rgba(26,101,153,.2)}
+.foto-badge i{font-size:13px}
+.foto-none{color:#ccc;font-size:11px}
+
+/* LIGHTBOX / PHOTO MODAL */
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:1000;padding:16px}
 .lightbox.show{display:flex}
 .lb-header{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:900px;padding:0 0 12px 0}
 .lb-title{color:rgba(255,255,255,.85);font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
-.lb-close{background:rgba(255,255,255,.12);border:none;color:white;width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.lb-title i{font-size:16px;color:#5DADE2}
+.lb-close{background:rgba(255,255,255,.12);border:none;color:white;width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
 .lb-close:hover{background:rgba(255,255,255,.25)}
 .lb-main{position:relative;display:flex;align-items:center;justify-content:center;width:100%;max-width:900px;flex:1;min-height:0}
 .lb-img-wrap{display:flex;align-items:center;justify-content:center;width:100%;height:100%;max-height:65vh}
 .lb-img-wrap img{max-width:100%;max-height:65vh;border-radius:10px;object-fit:contain;box-shadow:0 8px 40px rgba(0,0,0,.6);display:block}
 .lb-fallback{display:none;flex-direction:column;align-items:center;gap:14px;background:#1a1a1a;border-radius:10px;padding:40px 60px;text-align:center}
-.lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:white;width:44px;height:44px;border-radius:50%;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.lb-fallback .lb-icon{font-size:52px}
+.lb-fallback p{color:rgba(255,255,255,.7);font-size:14px}
+.lb-fallback a{background:#D4832A;color:white;padding:10px 22px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px}
+.lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:white;width:44px;height:44px;border-radius:50%;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;backdrop-filter:blur(4px)}
 .lb-nav:hover{background:rgba(255,255,255,.3)}
 .lb-prev{left:-56px}.lb-next{right:-56px}
 .lb-counter{color:rgba(255,255,255,.6);font-size:12px;margin-top:10px}
-.lb-strip{display:flex;gap:8px;margin-top:12px;max-width:900px;overflow-x:auto;padding:4px 0}
+.lb-strip{display:flex;gap:8px;margin-top:12px;max-width:900px;overflow-x:auto;padding:4px 0;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent}
+.lb-strip::-webkit-scrollbar{height:4px}.lb-strip::-webkit-scrollbar-track{background:transparent}.lb-strip::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:2px}
 .lb-thumb{width:60px;height:60px;border-radius:6px;overflow:hidden;border:2px solid transparent;cursor:pointer;flex-shrink:0;transition:border-color .15s}
 .lb-thumb.active{border-color:#5DADE2}
 .lb-thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:1500;padding:20px}
-.modal-bg.show{display:flex}
-.modal{background:white;border-radius:12px;padding:28px;width:100%;max-width:500px;box-shadow:0 20px 60px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto}
-.modal h3{font-size:16px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px}
-.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:24px;padding-top:16px;border-top:1px solid #eee}
-.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
-.admin-card{background:white;border-radius:8px;border:1px solid #e8e4df;padding:20px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:16px}
-.admin-card:hover{border-color:#B03A2E;box-shadow:0 4px 12px rgba(176,58,46,.1)}
-.admin-card-icon{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
-.admin-card-icon.red{background:#FAECE7;color:#B03A2E}
-.admin-card-icon.blue{background:#E6F1FB;color:#185FA5}
-.admin-card-info h4{font-size:14px;font-weight:600;margin-bottom:2px}
-.admin-card-info p{font-size:12px;color:#888}
-.rol-badge{padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
-.rol-administrador{background:#FAECE7;color:#993C1D}
-.rol-supervisor{background:#E6F1FB;color:#185FA5}
-.rol-agente{background:#EAF3DE;color:#3B6D11}
-.rol-lectura{background:#f0ede8;color:#666}
-.search-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
-.search-bar input{flex:1;min-width:200px;padding:8px 12px;border:1px solid #ccc;border-radius:6px;font-size:13px}
-.search-bar input:focus{outline:none;border-color:#B03A2E}
+.lb-thumb-fallback{width:100%;height:100%;background:#333;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.4);font-size:11px;text-align:center}
+
+/* CHART FILTERS */
 .filter-row{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+@media(max-width:900px){.filter-row{grid-template-columns:1fr 1fr 1fr}}
+@media(max-width:700px){.filter-row{grid-template-columns:1fr 1fr}}
+
+/* CHARTS */
 .ch-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
 .ch-card{background:white;border-radius:8px;border:1px solid #e8e4df;padding:18px}
 .ch-title{font-size:13px;font-weight:700;margin-bottom:14px}
@@ -167,371 +159,270 @@ tr:hover td{background:#fafaf9}
 .zone-card{background:#f0ede8;border-radius:6px;padding:10px;text-align:center}
 .zone-num{font-size:22px;font-weight:700}
 .zone-nm{font-size:11px;color:#666;margin-top:2px}
-.toast{position:fixed;bottom:20px;right:20px;background:#1E8449;color:white;padding:10px 18px;border-radius:7px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:#1E8449;color:white;padding:10px 18px;border-radius:7px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
 .toast.show{opacity:1}
+
+/* SPINNER */
 .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
 @keyframes spin{to{transform:rotate(360deg)}}
-.loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.85);display:none;align-items:center;justify-content:center;z-index:3000;flex-direction:column;gap:14px}
-.loading-overlay.show{display:flex}
-.loading-overlay .sp{width:40px;height:40px;border:3px solid rgba(176,58,46,.2);border-top-color:#B03A2E;border-radius:50%;animation:spin .7s linear infinite}
+
+/* CONFIG BANNER */
+.config-banner{background:#FFF3CD;border:1px solid #FFEAA7;border-radius:8px;padding:16px;margin-bottom:18px;display:flex;align-items:flex-start;gap:12px}
+.config-banner.hidden{display:none}
+.config-banner i{font-size:20px;color:#D68910;flex-shrink:0;margin-top:1px}
+.config-banner p{font-size:13px;color:#7D6608;line-height:1.5}
+.config-banner a{color:#B03A2E;font-weight:600}
+
 @media(max-width:700px){
   .metrics{grid-template-columns:1fr 1fr}
   .grid-2,.grid-3{grid-template-columns:1fr}
-  .ch-grid,.admin-grid{grid-template-columns:1fr}
+  .ch-grid{grid-template-columns:1fr}
   .dyn-row-4{grid-template-columns:1fr 1fr}
-  .lb-prev{left:-6px}.lb-next{right:-6px}
-  .filter-row{grid-template-columns:1fr 1fr}
-  .header-right .visit-count{display:none}
+  table{font-size:11px}
 }
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
-<div id="login-page" style="display:none">
-  <div class="login-wrap">
-    <div class="login-box">
-      <div class="login-logo">
-        <div class="icon"><i class="ti ti-building-store"></i></div>
-        <h1>UNIDOS MAYOREO</h1>
-        <p>Sistema de Registro · Visitas</p>
-      </div>
-      <div class="login-err" id="login-err"></div>
-      <div class="login-field">
-        <label>Correo electrónico</label>
-        <input type="email" id="l-email" placeholder="correo@empresa.com" autocomplete="email" onkeydown="if(event.key==='Enter')document.getElementById('l-pass').focus()">
-      </div>
-      <div class="login-field">
-        <label>Contraseña</label>
-        <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
-      </div>
-      <button class="login-btn" id="login-btn" onclick="doLogin()">
-        <i class="ti ti-login"></i> Ingresar
-      </button>
-    </div>
+<div class="header">
+  <div class="header-left">
+    <h1>UNIDOS MAYOREO</h1>
+    <p>Sistema de Registro · Desarrollo de Categorías</p>
+  </div>
+  <div class="visit-count">
+    <div class="num" id="hdr-count">0</div>
+    <div class="lbl">Visitas registradas</div>
   </div>
 </div>
 
-<!-- APP -->
-<div id="app-page" style="display:none">
-  <div class="header">
-    <div class="header-left">
-      <h1>UNIDOS MAYOREO</h1>
-      <p>Sistema de Registro · Desarrollo de Categorías</p>
+<div class="nav">
+  <button class="active" onclick="nav('analysis')"><i class="ti ti-chart-bar"></i> Análisis de visitas</button>
+  <button onclick="nav('charts')"><i class="ti ti-chart-pie"></i> Gráficos</button>
+  <button onclick="nav('form')"><i class="ti ti-plus"></i> Nueva visita</button>
+</div>
+
+<div class="content">
+
+  <!-- BANNER de configuración -->
+  <div class="config-banner" id="config-banner">
+    <i class="ti ti-alert-triangle"></i>
+    <p>
+      <strong>Configuración requerida:</strong> Para guardar datos en Google Sheets, reemplaza
+      <code>TU_URL_DE_APPS_SCRIPT</code> en el archivo <code>config.js</code> con la URL de tu Web App.
+      <a href="INSTRUCCIONES.md" target="_blank">Ver instrucciones paso a paso →</a>
+    </p>
+  </div>
+
+  <!-- ANALYSIS -->
+  <div id="page-analysis" class="page active">
+    <div class="page-header">
+      <h2>Análisis consolidado de visitas</h2>
+      <button class="btn-red" onclick="nav('form')"><i class="ti ti-plus"></i> + Nueva visita</button>
     </div>
-    <div class="header-right">
-      <div class="visit-count">
-        <div class="num" id="hdr-count">0</div>
-        <div class="lbl">Visitas registradas</div>
-      </div>
-      <div class="user-chip">
-        <div class="user-avatar" id="user-avatar">?</div>
-        <span id="user-name-chip">Usuario</span>
-        <span id="user-rol-chip" style="opacity:.7;font-size:10px;margin-left:2px"></span>
-      </div>
-      <button class="btn-logout" onclick="doLogout()"><i class="ti ti-logout"></i> Salir</button>
+    <div class="metrics">
+      <div class="metric"><div class="metric-lbl">Total visitas</div><div class="metric-val" id="m-tot">0</div></div>
+      <div class="metric"><div class="metric-lbl">Resueltos</div><div class="metric-val" style="color:#3B6D11" id="m-res">0</div></div>
+      <div class="metric"><div class="metric-lbl">En proceso</div><div class="metric-val" style="color:#185FA5" id="m-pro">0</div></div>
+      <div class="metric"><div class="metric-lbl">Pendientes</div><div class="metric-val" style="color:#854F0B" id="m-pen">0</div></div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Código</th><th>Cliente</th><th>Zona</th><th>Hallazgos</th>
+            <th>Problemas</th><th>Acciones clave</th><th>Fotos</th><th>Estado</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="tbl-body">
+          <tr><td colspan="9"><div class="empty-state">Cargando visitas...</div></td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <div class="nav" id="main-nav">
-    <button class="active" onclick="nav('analysis')"><i class="ti ti-chart-bar"></i> Análisis</button>
-    <button onclick="nav('charts')"><i class="ti ti-chart-pie"></i> Gráficos</button>
-    <button onclick="nav('form')" id="btn-nueva-visita"><i class="ti ti-plus"></i> Nueva visita</button>
-    <div class="nav-sep" id="nav-admin-sep" style="display:none"></div>
-    <button onclick="nav('admin')" id="btn-nav-admin" style="display:none"><i class="ti ti-shield"></i> Administración</button>
+  <!-- CHARTS -->
+  <div id="page-charts" class="page">
+    <h2 style="margin-bottom:16px;font-size:18px;font-weight:600">Gráficos y estadísticas</h2>
+
+    <div class="form-section">
+      <div class="sec-title"><i class="ti ti-filter"></i> Filtros</div>
+      <div class="filter-row">
+        <div class="fg"><label>Fecha inicio</label><input type="date" id="cf-date-start"></div>
+        <div class="fg"><label>Fecha fin</label><input type="date" id="cf-date-end"></div>
+        <div class="fg"><label>Estado</label>
+          <select id="cf-status">
+            <option value="">— Todos —</option>
+            <option>Resuelto</option><option>En proceso</option><option>Pendiente</option>
+          </select>
+        </div>
+        <div class="fg"><label>Zona</label><select id="cf-zone"><option value="">— Todas —</option></select></div>
+        <div class="fg"><label>Problema identificado</label><select id="cf-problem"><option value="">— Todos —</option></select></div>
+        <div class="fg"><label>Agente responsable</label><select id="cf-agent"><option value="">— Todos —</option></select></div>
+      </div>
+      <div class="form-footer">
+        <span class="hint" id="cf-count"></span>
+        <div style="display:flex;gap:8px">
+          <button class="btn-back" onclick="resetChartFilters()">Limpiar filtros</button>
+          <button class="btn-red" onclick="applyChartFilters()"><i class="ti ti-filter"></i> Aplicar filtros</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="charts-inner"></div>
   </div>
 
-  <div class="content">
+  <!-- FORM -->
+  <div id="page-form" class="page">
+    <div class="page-header">
+      <h2 id="form-ttl">Registrar nueva visita</h2>
+      <button class="btn-back" onclick="nav('analysis')"><i class="ti ti-arrow-left"></i> Volver</button>
+    </div>
+    <input type="hidden" id="f-eid">
 
-    <!-- ANALYSIS -->
-    <div id="page-analysis" class="page active">
-      <div class="page-header">
-        <h2>Análisis consolidado de visitas</h2>
-        <button class="btn-red" id="btn-nueva-visita2" onclick="nav('form')"><i class="ti ti-plus"></i> + Nueva visita</button>
-      </div>
-      <div class="metrics">
-        <div class="metric"><div class="metric-lbl">Total visitas</div><div class="metric-val" id="m-tot">0</div></div>
-        <div class="metric"><div class="metric-lbl">Resueltos</div><div class="metric-val" style="color:#3B6D11" id="m-res">0</div></div>
-        <div class="metric"><div class="metric-lbl">En proceso</div><div class="metric-val" style="color:#185FA5" id="m-pro">0</div></div>
-        <div class="metric"><div class="metric-lbl">Pendientes</div><div class="metric-val" style="color:#854F0B" id="m-pen">0</div></div>
-      </div>
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr><th>Código</th><th>Cliente</th><th>Zona</th><th>Hallazgos</th><th>Problemas</th><th>Acciones</th><th>Fotos</th><th>Estado</th><th></th></tr></thead>
-          <tbody id="tbl-body"><tr><td colspan="9"><div class="empty-state">Cargando visitas...</div></td></tr></tbody>
-        </table>
+    <!-- SEC 1 -->
+    <div class="form-section">
+      <div class="sec-title"><i class="ti ti-clipboard-list"></i> 1. Datos generales de la visita</div>
+      <div class="grid-2">
+        <div class="fg"><label>Fecha de visita *</label><input type="date" id="f-date"></div>
+        <div class="fg"><label>Agente responsable *</label><input type="text" id="f-agent" placeholder="Nombre del agente"></div>
+        <div class="fg"><label>Zona / Ruta *</label>
+          <select id="f-zone">
+            <option value="">— Seleccionar —</option>
+            <option>Heredia</option><option>San José</option><option>Alajuela</option>
+            <option>Cartago</option><option>Limón</option><option>Puntarenas</option><option>Guanacaste</option>
+          </select>
+        </div>
+        <div class="fg"><label>Código de cliente *</label><input type="text" id="f-code" placeholder="Ej: 5017"></div>
+        <div class="fg"><label>Nombre del cliente *</label><input type="text" id="f-name" placeholder="Razón social o nombre"></div>
+        <div class="fg"><label>Tipo de negocio</label>
+          <select id="f-type">
+            <option value="">— Seleccionar —</option>
+            <option>Supermercado / Mixto</option><option>Ferretería</option><option>Farmacia</option>
+            <option>Distribuidora</option><option>Pulpería</option><option>Minisuper</option><option>Otro</option>
+          </select>
+        </div>
+        <div class="fg"><label>Contacto / Dueño</label><input type="text" id="f-contact"></div>
+        <div class="fg"><label>Teléfono</label><input type="tel" id="f-phone"></div>
       </div>
     </div>
 
-    <!-- CHARTS -->
-    <div id="page-charts" class="page">
-      <h2 style="margin-bottom:16px;font-size:18px;font-weight:600">Gráficos y estadísticas</h2>
-      <div class="form-section">
-        <div class="sec-title"><i class="ti ti-filter"></i> Filtros</div>
-        <div class="filter-row">
-          <div class="fg"><label>Fecha inicio</label><input type="date" id="cf-date-start"></div>
-          <div class="fg"><label>Fecha fin</label><input type="date" id="cf-date-end"></div>
-          <div class="fg"><label>Estado</label><select id="cf-status"><option value="">— Todos —</option><option>Resuelto</option><option>En proceso</option><option>Pendiente</option></select></div>
-          <div class="fg"><label>Zona</label><select id="cf-zone"><option value="">— Todas —</option></select></div>
-          <div class="fg"><label>Problema</label><select id="cf-problem"><option value="">— Todos —</option></select></div>
-          <div class="fg"><label>Agente</label><select id="cf-agent"><option value="">— Todos —</option></select></div>
-        </div>
-        <div class="form-footer">
-          <span class="hint" id="cf-count"></span>
-          <div style="display:flex;gap:8px">
-            <button class="btn-back" onclick="resetChartFilters()">Limpiar</button>
-            <button class="btn-red" onclick="applyChartFilters()"><i class="ti ti-filter"></i> Aplicar</button>
-          </div>
-        </div>
+    <!-- SEC 2 -->
+    <div class="form-section">
+      <div class="sec-title"><i class="ti ti-credit-card"></i> 2. Estado de la cuenta</div>
+      <div class="grid-3">
+        <div class="fg"><label>Días de crédito vencido</label><input type="number" id="f-dias"></div>
+        <div class="fg"><label>Monto en mora (₡)</label><input type="number" id="f-mora"></div>
+        <div class="fg"><label>Facturas con errores</label><input type="number" id="f-fact"></div>
+        <div class="fg"><label>Notas de crédito pendientes</label><input type="number" id="f-nc"></div>
+        <div class="fg"><label>Devoluciones sin resolver</label><input type="number" id="f-dev"></div>
       </div>
-      <div id="charts-inner"></div>
     </div>
 
-    <!-- FORM -->
-    <div id="page-form" class="page">
-      <div class="page-header">
-        <h2 id="form-ttl">Registrar nueva visita</h2>
-        <button class="btn-back" onclick="nav('analysis')"><i class="ti ti-arrow-left"></i> Volver</button>
+    <!-- SEC 3 -->
+    <div class="form-section">
+      <div class="sec-title"><i class="ti ti-zoom-question"></i> 3. Hallazgos de la visita</div>
+      <div style="margin-bottom:16px">
+        <div class="fg"><label>Problemas identificados (seleccionar todos los que aplican)</label></div>
+        <div class="pill-group" id="pills-group"></div>
       </div>
-      <input type="hidden" id="f-eid">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="fg"><label>Reclamos del cliente</label><textarea id="f-reclamos"></textarea></div>
+        <div class="fg"><label>Competencia identificada / marcas que compra</label><textarea id="f-competencia"></textarea></div>
+        <div class="fg"><label>Problemas de garantía / taller / repuestos</label><textarea id="f-garantia"></textarea></div>
+        <div class="fg"><label>Material POP / exhibidores / faltantes</label><textarea id="f-pop"></textarea></div>
+        <div class="fg"><label>Observaciones adicionales</label><textarea id="f-obs"></textarea></div>
+      </div>
+    </div>
 
-      <div class="form-section">
-        <div class="sec-title"><i class="ti ti-clipboard-list"></i> 1. Datos generales</div>
-        <div class="grid-2">
-          <div class="fg"><label>Fecha *</label><input type="date" id="f-date"></div>
-          <div class="fg"><label>Agente responsable *</label><select id="f-agent"><option value="">— Seleccionar agente —</option></select></div>
-          <div class="fg"><label>Zona / Ruta *</label>
-            <select id="f-zone"><option value="">— Seleccionar —</option><option>Heredia</option><option>San José</option><option>Alajuela</option><option>Cartago</option><option>Limón</option><option>Puntarenas</option><option>Guanacaste</option></select>
-          </div>
-          <div class="fg"><label>Seleccionar cliente del catálogo</label>
-            <select id="f-client-select" onchange="fillClientData(this.value)"><option value="">— Buscar en catálogo —</option></select>
-          </div>
-          <div class="fg"><label>Código de cliente *</label><input type="text" id="f-code" placeholder="Ej: 5017"></div>
-          <div class="fg"><label>Nombre del cliente *</label><input type="text" id="f-name" placeholder="Razón social o nombre"></div>
-          <div class="fg"><label>Tipo de negocio</label>
-            <select id="f-type"><option value="">— Seleccionar —</option><option>Supermercado / Mixto</option><option>Ferretería</option><option>Farmacia</option><option>Distribuidora</option><option>Pulpería</option><option>Minisuper</option><option>Otro</option></select>
-          </div>
-          <div class="fg"><label>Contacto / Dueño</label><input type="text" id="f-contact"></div>
-          <div class="fg"><label>Teléfono</label><input type="tel" id="f-phone"></div>
+    <!-- SEC FOTOS -->
+    <div class="form-section">
+      <div class="sec-title"><i class="ti ti-camera"></i> 4. Evidencia fotográfica</div>
+      <div class="fg">
+        <label>Agregar fotos de la visita</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+          <button type="button" class="btn-add" onclick="document.getElementById('f-photo-camera').click()">
+            <i class="ti ti-camera"></i> Tomar foto
+          </button>
+          <button type="button" class="btn-add" style="background:#1A5276" onclick="document.getElementById('f-photo-gallery').click()">
+            <i class="ti ti-photo"></i> Elegir de galería
+          </button>
         </div>
+        <input type="file" id="f-photo-camera" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoSelect(event)">
+        <input type="file" id="f-photo-gallery" accept="image/*" multiple style="display:none" onchange="handlePhotoSelect(event)">
       </div>
+      <div class="photo-grid" id="photo-grid"></div>
+      <div class="photo-empty" id="photo-empty">Aún no hay fotos agregadas.</div>
+    </div>
 
-      <div class="form-section">
-        <div class="sec-title"><i class="ti ti-credit-card"></i> 2. Estado de la cuenta</div>
-        <div class="grid-3">
-          <div class="fg"><label>Días crédito vencido</label><input type="number" id="f-dias"></div>
-          <div class="fg"><label>Monto en mora (₡)</label><input type="number" id="f-mora"></div>
-          <div class="fg"><label>Facturas con errores</label><input type="number" id="f-fact"></div>
-          <div class="fg"><label>Notas de crédito pendientes</label><input type="number" id="f-nc"></div>
-          <div class="fg"><label>Devoluciones sin resolver</label><input type="number" id="f-dev"></div>
-        </div>
+    <!-- SEC 5 -->
+    <div class="form-section">
+      <div class="sec-title"><i class="ti ti-package"></i> 5. Pedido / negocio realizado</div>
+      <div style="display:grid;grid-template-columns:1fr .6fr 1fr 32px;gap:10px;margin-bottom:8px">
+        <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px">Categoría / Línea</span>
+        <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px">Monto (₡)</span>
+        <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px">Observaciones</span>
+        <span></span>
       </div>
+      <div id="pedido-rows"></div>
+      <button class="btn-add" onclick="addPedido()"><i class="ti ti-plus"></i> + Agregar línea</button>
+    </div>
 
-      <div class="form-section">
-        <div class="sec-title"><i class="ti ti-zoom-question"></i> 3. Hallazgos</div>
-        <div style="margin-bottom:16px"><div class="fg"><label>Problemas identificados</label></div><div class="pill-group" id="pills-group"></div></div>
-        <div style="display:flex;flex-direction:column;gap:14px">
-          <div class="fg"><label>Reclamos del cliente</label><textarea id="f-reclamos"></textarea></div>
-          <div class="fg"><label>Competencia identificada</label><textarea id="f-competencia"></textarea></div>
-          <div class="fg"><label>Problemas de garantía / taller</label><textarea id="f-garantia"></textarea></div>
-          <div class="fg"><label>Material POP / exhibidores</label><textarea id="f-pop"></textarea></div>
-          <div class="fg"><label>Observaciones adicionales</label><textarea id="f-obs"></textarea></div>
-        </div>
+    <!-- SEC 5 -->
+    <div class="form-section">
+      <div class="sec-title"><i class="ti ti-checkbox"></i> 6. Acciones y compromisos</div>
+      <div style="display:grid;grid-template-columns:1fr .6fr .6fr .6fr 32px;gap:10px;margin-bottom:8px">
+        <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px">Acción a ejecutar</span>
+        <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px">Responsable</span>
+        <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px">Fecha compromiso</span>
+        <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px">Prioridad</span>
+        <span></span>
       </div>
+      <div id="accion-rows"></div>
+      <button class="btn-add" style="background:#1A5276" onclick="addAccion()"><i class="ti ti-plus"></i> + Agregar acción</button>
+    </div>
 
-      <div class="form-section">
-        <div class="sec-title"><i class="ti ti-camera"></i> 4. Evidencia fotográfica</div>
+    <!-- SEC 6 -->
+    <div class="form-section">
+      <div class="sec-title"><i class="ti ti-checklist"></i> 7. Evaluación y cierre</div>
+      <div class="grid-3">
         <div class="fg">
-          <label>Agregar fotos</label>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
-            <button type="button" class="btn-add" onclick="document.getElementById('f-photo-camera').click()"><i class="ti ti-camera"></i> Tomar foto</button>
-            <button type="button" class="btn-add" style="background:#1A5276" onclick="document.getElementById('f-photo-gallery').click()"><i class="ti ti-photo"></i> Elegir de galería</button>
+          <label>¿Se realizó pedido?</label>
+          <select id="f-pedido-realizado">
+            <option value="">— Seleccionar —</option>
+            <option>Sí</option><option>No</option><option>Pedido parcial</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Satisfacción del cliente (1–5)</label>
+          <div class="stars" id="stars-row">
+            <div class="star" onclick="setStar(1)">1</div>
+            <div class="star" onclick="setStar(2)">2</div>
+            <div class="star" onclick="setStar(3)">3</div>
+            <div class="star" onclick="setStar(4)">4</div>
+            <div class="star" onclick="setStar(5)">5</div>
           </div>
-          <input type="file" id="f-photo-camera" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoSelect(event)">
-          <input type="file" id="f-photo-gallery" accept="image/*" multiple style="display:none" onchange="handlePhotoSelect(event)">
+          <input type="hidden" id="f-sat" value="0">
         </div>
-        <div class="photo-grid" id="photo-grid"></div>
-        <div class="photo-empty" id="photo-empty">Aún no hay fotos agregadas.</div>
+        <div class="fg"><label>Próxima visita programada</label><input type="date" id="f-nextv"></div>
+        <div class="fg full"><label>Comentarios finales / contexto adicional</label><textarea id="f-comments"></textarea></div>
+        <div class="fg full"><label>Firma / nombre del encargado</label><input type="text" id="f-firma"></div>
       </div>
-
-      <div class="form-section">
-        <div class="sec-title"><i class="ti ti-package"></i> 5. Pedido realizado</div>
-        <div style="display:grid;grid-template-columns:1fr .6fr 1fr 32px;gap:10px;margin-bottom:8px">
-          <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase">Categoría</span>
-          <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase">Monto (₡)</span>
-          <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase">Observaciones</span>
-          <span></span>
-        </div>
-        <div id="pedido-rows"></div>
-        <button class="btn-add" onclick="addPedido()"><i class="ti ti-plus"></i> + Agregar línea</button>
+      <div class="form-footer">
+        <span class="hint">* Código, nombre y fecha son obligatorios</span>
+        <button class="btn-save" id="save-btn" onclick="saveVisit()">
+          <i class="ti ti-device-floppy"></i> Guardar visita
+        </button>
       </div>
-
-      <div class="form-section">
-        <div class="sec-title"><i class="ti ti-checkbox"></i> 6. Acciones y compromisos</div>
-        <div style="display:grid;grid-template-columns:1fr .6fr .6fr .6fr 32px;gap:10px;margin-bottom:8px">
-          <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase">Acción</span>
-          <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase">Responsable</span>
-          <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase">Fecha</span>
-          <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase">Prioridad</span>
-          <span></span>
-        </div>
-        <div id="accion-rows"></div>
-        <button class="btn-add" style="background:#1A5276" onclick="addAccion()"><i class="ti ti-plus"></i> + Agregar acción</button>
-      </div>
-
-      <div class="form-section">
-        <div class="sec-title"><i class="ti ti-checklist"></i> 7. Evaluación y cierre</div>
-        <div class="grid-3">
-          <div class="fg"><label>¿Se realizó pedido?</label>
-            <select id="f-pedido-realizado"><option value="">— Seleccionar —</option><option>Sí</option><option>No</option><option>Pedido parcial</option></select>
-          </div>
-          <div class="fg">
-            <label>Satisfacción del cliente (1–5)</label>
-            <div class="stars">
-              <div class="star" onclick="setStar(1)">1</div><div class="star" onclick="setStar(2)">2</div>
-              <div class="star" onclick="setStar(3)">3</div><div class="star" onclick="setStar(4)">4</div>
-              <div class="star" onclick="setStar(5)">5</div>
-            </div>
-            <input type="hidden" id="f-sat" value="0">
-          </div>
-          <div class="fg"><label>Próxima visita</label><input type="date" id="f-nextv"></div>
-          <div class="fg full"><label>Comentarios finales</label><textarea id="f-comments"></textarea></div>
-          <div class="fg full"><label>Firma / nombre del encargado</label><input type="text" id="f-firma"></div>
-        </div>
-        <div class="form-footer">
-          <span class="hint">* Código, nombre y fecha son obligatorios</span>
-          <button class="btn-save" id="save-btn" onclick="saveVisit()"><i class="ti ti-device-floppy"></i> Guardar visita</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ADMIN HOME -->
-    <div id="page-admin" class="page">
-      <div class="page-header"><h2><i class="ti ti-shield" style="color:#B03A2E"></i> Administración</h2></div>
-      <div class="admin-grid">
-        <div class="admin-card" onclick="nav('admin-users')">
-          <div class="admin-card-icon red"><i class="ti ti-users"></i></div>
-          <div class="admin-card-info"><h4>Gestión de usuarios</h4><p>Crear, editar y asignar roles</p></div>
-        </div>
-        <div class="admin-card" onclick="nav('admin-clients')">
-          <div class="admin-card-icon blue"><i class="ti ti-building-store"></i></div>
-          <div class="admin-card-info"><h4>Catálogo de clientes</h4><p>Agregar y gestionar clientes</p></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ADMIN USERS -->
-    <div id="page-admin-users" class="page">
-      <div class="page-header">
-        <div style="display:flex;align-items:center;gap:10px">
-          <button class="btn-back" onclick="nav('admin')"><i class="ti ti-arrow-left"></i></button>
-          <h2>Usuarios del sistema</h2>
-        </div>
-        <button class="btn-red" onclick="openUserModal()"><i class="ti ti-plus"></i> Nuevo usuario</button>
-      </div>
-      <div class="search-bar"><input type="text" id="user-search" placeholder="Buscar por nombre o correo..." oninput="renderUsersTable()"></div>
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
-          <tbody id="users-tbl-body"><tr><td colspan="5"><div class="empty-state">Cargando...</div></td></tr></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ADMIN CLIENTS -->
-    <div id="page-admin-clients" class="page">
-      <div class="page-header">
-        <div style="display:flex;align-items:center;gap:10px">
-          <button class="btn-back" onclick="nav('admin')"><i class="ti ti-arrow-left"></i></button>
-          <h2>Catálogo de clientes</h2>
-        </div>
-        <button class="btn-red" onclick="openClientModal()"><i class="ti ti-plus"></i> Nuevo cliente</button>
-      </div>
-      <div class="search-bar"><input type="text" id="client-search" placeholder="Buscar por código o nombre..." oninput="renderClientsTable()"></div>
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr><th>Código</th><th>Nombre</th><th>Tipo</th><th>Zona</th><th>Contacto</th><th>Estado</th><th>Acciones</th></tr></thead>
-          <tbody id="clients-tbl-body"><tr><td colspan="7"><div class="empty-state">Cargando...</div></td></tr></tbody>
-        </table>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<!-- MODAL USUARIO -->
-<div class="modal-bg" id="modal-user">
-  <div class="modal">
-    <h3><i class="ti ti-user-plus" style="color:#B03A2E"></i> <span id="modal-user-title">Nuevo usuario</span></h3>
-    <input type="hidden" id="mu-id">
-    <div style="display:flex;flex-direction:column;gap:14px">
-      <div class="fg"><label>Nombre completo *</label><input type="text" id="mu-nombre" placeholder="Juan Pérez"></div>
-      <div class="fg"><label>Correo electrónico *</label><input type="email" id="mu-correo" placeholder="juan@empresa.com"></div>
-      <div class="fg" id="mu-pass-group"><label>Contraseña *</label><input type="password" id="mu-pass" placeholder="Mínimo 6 caracteres"></div>
-      <div class="fg"><label>Rol *</label>
-        <select id="mu-rol">
-          <option value="agente">Agente de ventas</option>
-          <option value="supervisor">Supervisor</option>
-          <option value="lectura">Solo lectura</option>
-          <option value="administrador">Administrador</option>
-        </select>
-      </div>
-      <div class="fg" id="mu-activo-group" style="display:none">
-        <label>Estado</label>
-        <select id="mu-activo"><option value="true">Activo</option><option value="false">Inactivo</option></select>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-back" onclick="closeModal('modal-user')">Cancelar</button>
-      <button class="btn-red" onclick="saveUser()"><i class="ti ti-check"></i> Guardar</button>
     </div>
   </div>
+
 </div>
 
-<!-- MODAL RESET CONTRASEÑA -->
-<div class="modal-bg" id="modal-reset-pass">
-  <div class="modal">
-    <h3><i class="ti ti-key" style="color:#B03A2E"></i> Restablecer contraseña</h3>
-    <input type="hidden" id="rp-id">
-    <p style="font-size:13px;color:#666;margin-bottom:16px">Usuario: <strong id="rp-nombre"></strong></p>
-    <div class="fg"><label>Nueva contraseña *</label><input type="password" id="rp-pass" placeholder="Mínimo 6 caracteres"></div>
-    <div class="modal-footer">
-      <button class="btn-back" onclick="closeModal('modal-reset-pass')">Cancelar</button>
-      <button class="btn-red" onclick="resetPassword()"><i class="ti ti-check"></i> Restablecer</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL CLIENTE -->
-<div class="modal-bg" id="modal-client">
-  <div class="modal">
-    <h3><i class="ti ti-building-store" style="color:#B03A2E"></i> <span id="modal-client-title">Nuevo cliente</span></h3>
-    <input type="hidden" id="mc-id">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-      <div class="fg"><label>Código *</label><input type="text" id="mc-codigo" placeholder="Ej: 5017"></div>
-      <div class="fg"><label>Nombre *</label><input type="text" id="mc-nombre" placeholder="Razón social"></div>
-      <div class="fg"><label>Tipo</label>
-        <select id="mc-tipo"><option value="">— Seleccionar —</option><option>Supermercado / Mixto</option><option>Ferretería</option><option>Farmacia</option><option>Distribuidora</option><option>Pulpería</option><option>Minisuper</option><option>Otro</option></select>
-      </div>
-      <div class="fg"><label>Zona</label>
-        <select id="mc-zona"><option value="">— Seleccionar —</option><option>Heredia</option><option>San José</option><option>Alajuela</option><option>Cartago</option><option>Limón</option><option>Puntarenas</option><option>Guanacaste</option></select>
-      </div>
-      <div class="fg"><label>Contacto</label><input type="text" id="mc-contacto" placeholder="Nombre del dueño"></div>
-      <div class="fg"><label>Teléfono</label><input type="tel" id="mc-telefono" placeholder="8888-8888"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-back" onclick="closeModal('modal-client')">Cancelar</button>
-      <button class="btn-red" onclick="saveClient()"><i class="ti ti-check"></i> Guardar</button>
-    </div>
-  </div>
-</div>
-
-<!-- LIGHTBOX -->
-<div class="lightbox" id="lightbox" onclick="handleLightboxBackdropClick(event)"></div>
-
-<!-- TOAST & LOADING -->
 <div class="toast" id="toast"></div>
-<div class="loading-overlay" id="loading"><div class="sp"></div><p id="loading-msg">Cargando...</p></div>
+
+<div class="lightbox" id="lightbox" onclick="handleLightboxBackdropClick(event)"></div>
 
 <script src="config.js"></script>
 <script src="app.js"></script>
