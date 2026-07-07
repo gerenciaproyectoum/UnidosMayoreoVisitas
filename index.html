@@ -66,6 +66,9 @@ tr:hover td{background:#fafaf9}
 .act-list li::before{content:"•";position:absolute;left:0;color:#B03A2E}
 .edit-btn{background:none;border:1px solid #ccc;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:11px;color:#666;display:inline-flex;align-items:center;gap:3px}
 .edit-btn:hover{background:#f5f5f5}
+.del-btn{background:#FAECE7;border:1px solid #f3d9d0;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:11px;color:#993C1D;display:inline-flex;align-items:center;gap:3px}
+.del-btn:hover{background:#f6d7cc}
+.row-actions{display:flex;gap:6px;flex-wrap:wrap}
 .empty-state{text-align:center;padding:48px;color:#888;font-size:14px}
 
 /* FORM */
@@ -131,6 +134,16 @@ tr:hover td{background:#fafaf9}
 .zone-card{background:#f0ede8;border-radius:6px;padding:10px;text-align:center}
 .zone-num{font-size:22px;font-weight:700}
 .zone-nm{font-size:11px;color:#666;margin-top:2px}
+
+/* CONFIRM MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:1100;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-card{background:white;border-radius:10px;padding:26px;max-width:380px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+.modal-icon{width:48px;height:48px;border-radius:50%;background:#FAECE7;color:#B03A2E;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 14px}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:8px}
+.modal-msg{font-size:13px;color:#666;margin-bottom:22px;line-height:1.5}
+.modal-actions{display:flex;gap:10px;justify-content:center}
+.modal-actions button{flex:1;justify-content:center}
 
 /* TOAST */
 .toast{position:fixed;bottom:20px;right:20px;background:#1E8449;color:white;padding:10px 18px;border-radius:7px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
@@ -204,7 +217,7 @@ tr:hover td{background:#fafaf9}
         <thead>
           <tr>
             <th>Código</th><th>Cliente</th><th>Zona</th><th>Hallazgos</th>
-            <th>Problemas</th><th>Acciones clave</th><th>Fotos</th><th>Estado</th><th></th>
+            <th>Problemas</th><th>Acciones clave</th><th>Fotos</th><th>Estado</th><th>Acciones</th>
           </tr>
         </thead>
         <tbody id="tbl-body">
@@ -395,6 +408,18 @@ tr:hover td{background:#fafaf9}
 <div class="toast" id="toast"></div>
 
 <div class="lightbox" id="lightbox" onclick="closeLightbox()"></div>
+
+<div class="modal-overlay" id="confirm-modal" onclick="hideConfirmModal()">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <div class="modal-icon"><i class="ti ti-alert-triangle"></i></div>
+    <div class="modal-title">¿Eliminar esta visita?</div>
+    <div class="modal-msg" id="confirm-modal-msg">Esta acción no se puede deshacer.</div>
+    <div class="modal-actions">
+      <button class="btn-back" onclick="hideConfirmModal()">Cancelar</button>
+      <button class="btn-red" id="confirm-modal-btn"><i class="ti ti-trash"></i> Eliminar</button>
+    </div>
+  </div>
+</div>
 
 <script src="config.js"></script>
 <script src="app.js"></script>
