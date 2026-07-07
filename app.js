@@ -1,19 +1,43 @@
 // ============================================================
 //  APP.JS — Unidos Mayoreo · Sistema de Visitas
 // ============================================================
-
+ 
 const PROBLEMS = [
   'Garantías lentas','Taller lento','Repuestos faltantes','Cobros excesivos',
   'Falta de agente','Horario de retiro','Push money inconsistente','Promesas incumplidas',
   'Notas de crédito pendientes','Comunicación deficiente','Otro'
 ];
-
+ 
+// Mismo orden que las opciones del selector de zona en el formulario,
+// más "Sin zona" para las visitas sin zona asignada. El orden es fijo
+// para que cada zona conserve siempre el mismo color en los gráficos,
+// sin importar cómo cambien los filtros o los totales.
+const ZONES = ['Heredia','San José','Alajuela','Cartago','Limón','Puntarenas','Guanacaste','Sin zona'];
+ 
+// Paleta categórica validada (contraste + separación para daltonismo).
+// El orden de los colores es fijo: cada categoría siempre usa el mismo
+// color, la identidad nunca depende del orden en que aparecen las barras.
+const CHART_PALETTE = ['#e34948','#eb6834','#2a78d6','#008300','#1baf7a','#4a3aa7','#eda100','#e87ba4'];
+ 
+// Colores de estado reservados (coinciden con los badges .st-r/.st-p/.st-n de la tabla).
+const STATUS_COLORS = { 'Pendiente': '#e34948', 'En proceso': '#2a78d6', 'Resuelto': '#008300' };
+ 
+function colorForZone(z) {
+  const i = ZONES.indexOf(z);
+  return CHART_PALETTE[(i >= 0 ? i : ZONES.length) % CHART_PALETTE.length];
+}
+function colorForProblem(p) {
+  const i = PROBLEMS.indexOf(p);
+  return CHART_PALETTE[(i >= 0 ? i : PROBLEMS.length) % CHART_PALETTE.length];
+}
+ 
 let visits = [];
 let starVal = 0;
 let editId = null;
+let pendingDeleteId = null;
 let currentPhotos = []; // [{dataUrl, isNew:true}] nuevas | [{url, isNew:false}] ya subidas
 let isConfigured = CONFIG.SCRIPT_URL !== 'TU_URL_DE_APPS_SCRIPT';
-
+ 
 // ── INIT ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   if (!isConfigured) {
@@ -27,12 +51,12 @@ document.addEventListener('DOMContentLoaded', () => {
   addAccion();
   loadVisits();
 });
-
+ 
 // ── UTILIDADES ────────────────────────────────────────────
 function today() {
   return new Date().toISOString().split('T')[0];
 }
-
+ 
 function toast(msg, ok = true) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -40,13 +64,23 @@ function toast(msg, ok = true) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3500);
 }
-
+ 
+// Escapa comillas para poder insertar texto dinámico dentro de atributos
+// onclick="..." con comillas simples.
+function escAttr(str) {
+  return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+ 
+function escapeXml(s) {
+  return String(s).replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&apos;', '"': '&quot;' }[c]));
+}
+ 
 function setStar(n) {
   starVal = n;
   document.getElementById('f-sat').value = n;
   document.querySelectorAll('.star').forEach((s, i) => s.classList.toggle('on', i < n));
 }
-
+ 
 // ── NAVEGACIÓN ────────────────────────────────────────────
 function nav(p) {
   document.querySelectorAll('.page').forEach(e => e.classList.remove('active'));
@@ -58,18 +92,18 @@ function nav(p) {
   if (p === 'charts') { populateChartFilterOptions(); renderCharts(); }
   if (p === 'form' && !editId) resetForm();
 }
-
+ 
 // ── PILLS (PROBLEMAS) ─────────────────────────────────────
 function buildPills() {
   document.getElementById('pills-group').innerHTML = PROBLEMS
     .map(p => `<span class="pill" data-p="${p}" onclick="this.classList.toggle('on')">${p}</span>`)
     .join('');
 }
-
+ 
 function getProblems() {
   return Array.from(document.querySelectorAll('#pills-group .pill.on')).map(p => p.dataset.p);
 }
-
+ 
 // ── FILAS DINÁMICAS ───────────────────────────────────────
 function addPedido(data = {}) {
   const id = 'pd' + Date.now() + Math.random();
@@ -83,7 +117,7 @@ function addPedido(data = {}) {
     <button class="btn-rm" onclick="document.getElementById('${id}').remove()">×</button>`;
   document.getElementById('pedido-rows').appendChild(div);
 }
-
+ 
 function addAccion(data = {}) {
   const id = 'ac' + Date.now() + Math.random();
   const div = document.createElement('div');
@@ -101,14 +135,14 @@ function addAccion(data = {}) {
     <button class="btn-rm" onclick="document.getElementById('${id}').remove()">×</button>`;
   document.getElementById('accion-rows').appendChild(div);
 }
-
+ 
 function getPedidos() {
   return Array.from(document.querySelectorAll('#pedido-rows .dyn-row')).map(r => {
     const i = r.querySelectorAll('input');
     return { cat: i[0].value, monto: i[1].value, obs: i[2].value };
   }).filter(p => p.cat.trim());
 }
-
+ 
 function getAcciones() {
   return Array.from(document.querySelectorAll('#accion-rows .dyn-row')).map(r => {
     const i = r.querySelectorAll('input');
@@ -116,7 +150,7 @@ function getAcciones() {
     return { accion: i[0].value, resp: i[1].value, fecha: i[2].value, prio: s ? s.value : '' };
   }).filter(a => a.accion.trim());
 }
-
+ 
 // ── EVIDENCIA FOTOGRÁFICA ─────────────────────────────────
 function compressImage(file, maxWidth = 1280, quality = 0.7) {
   return new Promise((resolve, reject) => {
@@ -142,7 +176,7 @@ function compressImage(file, maxWidth = 1280, quality = 0.7) {
     reader.readAsDataURL(file);
   });
 }
-
+ 
 async function handlePhotoSelect(event) {
   const files = Array.from(event.target.files || []);
   for (const file of files) {
@@ -157,7 +191,7 @@ async function handlePhotoSelect(event) {
   renderPhotoGrid();
   event.target.value = ''; // permite volver a elegir el mismo archivo
 }
-
+ 
 function renderPhotoGrid() {
   const grid = document.getElementById('photo-grid');
   const empty = document.getElementById('photo-empty');
@@ -175,28 +209,28 @@ function renderPhotoGrid() {
     </div>`;
   }).join('');
 }
-
+ 
 function removePhoto(i) {
   currentPhotos.splice(i, 1);
   renderPhotoGrid();
 }
-
+ 
 // ── GALERÍA / LIGHTBOX ────────────────────────────────────
 let galleryPhotos = [];
 let galleryIndex = 0;
-
+ 
 function openGallery(photos, startIndex = 0) {
   galleryPhotos = photos;
   galleryIndex = startIndex;
   renderGallery();
   document.getElementById('lightbox').classList.add('show');
 }
-
+ 
 function renderGallery() {
   const src = galleryPhotos[galleryIndex];
   const lb = document.getElementById('lightbox');
   const total = galleryPhotos.length;
-
+ 
   // Extraer el ID del archivo de Drive para usar la URL de thumbnail
   // que sí funciona en todos los navegadores
   let displaySrc = src;
@@ -209,7 +243,7 @@ function renderGallery() {
       displaySrc = `https://drive.google.com/thumbnail?id=${driveFileId}&sz=w1280`;
     }
   }
-
+ 
   const navBtns = `
     <div style="display:flex;align-items:center;gap:16px;margin-top:10px">
       ${total > 1 ? `<button onclick="galleryPrev()" style="background:rgba(255,255,255,.15);border:none;color:white;width:38px;height:38px;border-radius:50%;font-size:20px;cursor:pointer">‹</button>` : ''}
@@ -218,7 +252,7 @@ function renderGallery() {
       ${driveFileId ? `<a href="https://drive.google.com/file/d/${driveFileId}/view" target="_blank" rel="noopener" style="background:rgba(255,255,255,.15);color:white;width:38px;height:38px;border-radius:50%;font-size:14px;display:flex;align-items:center;justify-content:center;text-decoration:none" title="Abrir en Drive">↗</a>` : ''}
       <button onclick="closeLightbox()" style="background:rgba(255,255,255,.15);border:none;color:white;width:38px;height:38px;border-radius:50%;font-size:16px;cursor:pointer">✕</button>
     </div>`;
-
+ 
   lb.innerHTML = `
     <div onclick="event.stopPropagation()" style="position:relative;max-width:92vw;max-height:90vh;display:flex;flex-direction:column;align-items:center">
       <img id="gallery-img" src="${displaySrc}" alt="Evidencia ${galleryIndex + 1}"
@@ -241,26 +275,26 @@ function renderGallery() {
       ${navBtns}
     </div>`; 
 }
-
+ 
 function galleryPrev() {
   galleryIndex = (galleryIndex - 1 + galleryPhotos.length) % galleryPhotos.length;
   renderGallery();
 }
-
+ 
 function galleryNext() {
   galleryIndex = (galleryIndex + 1) % galleryPhotos.length;
   renderGallery();
 }
-
+ 
 function openLightbox(src) {
   openGallery([src], 0);
 }
-
+ 
 function closeLightbox() {
   document.getElementById('lightbox').classList.remove('show');
   document.getElementById('lightbox').innerHTML = '';
 }
-
+ 
 // ── FORMULARIO ────────────────────────────────────────────
 function resetForm() {
   editId = null;
@@ -284,7 +318,7 @@ function resetForm() {
   addPedido();
   addAccion();
 }
-
+ 
 function populateForm(v) {
   document.getElementById('form-ttl').textContent = 'Editar visita';
   document.getElementById('f-eid').value = v.id;
@@ -313,7 +347,7 @@ function populateForm(v) {
   currentPhotos = (v.fotos || []).filter(Boolean).map(url => ({ url, isNew: false }));
   renderPhotoGrid();
 }
-
+ 
 // ── GUARDAR VISITA ────────────────────────────────────────
 async function saveVisit() {
   const code = document.getElementById('f-code').value.trim();
@@ -323,7 +357,7 @@ async function saveVisit() {
     toast('Código, nombre y fecha son obligatorios.', false);
     return;
   }
-
+ 
   const v = {
     id: editId || Date.now().toString(),
     code, name, date,
@@ -354,11 +388,11 @@ async function saveVisit() {
     status: editId ? (visits.find(x => x.id === editId) || {}).status || 'Pendiente' : 'Pendiente',
     createdAt: editId ? (visits.find(x => x.id === editId) || {}).createdAt : new Date().toISOString()
   };
-
+ 
   const btn = document.getElementById('save-btn');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Guardando...';
-
+ 
   if (isConfigured) {
     try {
       const res = await fetch(CONFIG.SCRIPT_URL, {
@@ -376,7 +410,7 @@ async function saveVisit() {
       return;
     }
   }
-
+ 
   // Siempre guarda local también como respaldo
   if (editId) {
     const i = visits.findIndex(x => x.id === editId);
@@ -385,14 +419,14 @@ async function saveVisit() {
     visits.unshift(v);
   }
   localStorage.setItem('um-visits', JSON.stringify(visits));
-
+ 
   btn.disabled = false;
   btn.innerHTML = '<i class="ti ti-device-floppy"></i> Guardar visita';
   toast('Visita guardada exitosamente.');
   editId = null;
   nav('analysis');
 }
-
+ 
 // ── CARGAR VISITAS ────────────────────────────────────────
 async function loadVisits() {
   if (isConfigured) {
@@ -416,7 +450,7 @@ async function loadVisits() {
   renderTable();
   updateMetrics();
 }
-
+ 
 // ── EDITAR ────────────────────────────────────────────────
 function editVisit(id) {
   const v = visits.find(x => String(x.id) === String(id));
@@ -425,7 +459,7 @@ function editVisit(id) {
   populateForm(v);
   nav('form');
 }
-
+ 
 // ── MÉTRICAS ──────────────────────────────────────────────
 function updateMetrics() {
   document.getElementById('hdr-count').textContent = visits.length;
@@ -434,7 +468,7 @@ function updateMetrics() {
   document.getElementById('m-pro').textContent = visits.filter(v => v.status === 'En proceso').length;
   document.getElementById('m-pen').textContent = visits.filter(v => v.status === 'Pendiente').length;
 }
-
+ 
 // ── TABLA ─────────────────────────────────────────────────
 function renderTable() {
   updateMetrics();
@@ -462,11 +496,59 @@ function renderTable() {
       <td><ul class="act-list">${acts}</ul></td>
       <td>${fotosCell}</td>
       <td><span class="st ${sc}">${v.status}</span><div style="font-size:11px;margin-top:4px">${sat}</div></td>
-      <td><button class="edit-btn" onclick="editVisit('${v.id}')"><i class="ti ti-edit"></i> Editar</button></td>
+      <td><div class="row-actions">
+        <button class="edit-btn" onclick="editVisit('${v.id}')"><i class="ti ti-edit"></i> Editar</button>
+        <button class="del-btn" onclick="confirmDeleteVisit('${v.id}','${escAttr(v.name)}')"><i class="ti ti-trash"></i> Eliminar</button>
+      </div></td>
     </tr>`;
   }).join('');
 }
-
+ 
+// ── ELIMINAR VISITA ───────────────────────────────────────
+function confirmDeleteVisit(id, name) {
+  pendingDeleteId = id;
+  document.getElementById('confirm-modal-msg').textContent =
+    `Se eliminará permanentemente la visita de "${name}". Esta acción no se puede deshacer.`;
+  const btn = document.getElementById('confirm-modal-btn');
+  btn.disabled = false;
+  btn.innerHTML = '<i class="ti ti-trash"></i> Eliminar';
+  btn.onclick = () => deleteVisit(id);
+  document.getElementById('confirm-modal').classList.add('show');
+}
+ 
+function hideConfirmModal() {
+  document.getElementById('confirm-modal').classList.remove('show');
+  pendingDeleteId = null;
+}
+ 
+async function deleteVisit(id) {
+  const btn = document.getElementById('confirm-modal-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Eliminando...';
+ 
+  if (isConfigured) {
+    try {
+      const res = await fetch(CONFIG.SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'delete', id })
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Error desconocido');
+    } catch (e) {
+      toast('No se pudo eliminar en Google Sheets: ' + e.message, false);
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ti ti-trash"></i> Eliminar';
+      return;
+    }
+  }
+ 
+  visits = visits.filter(v => String(v.id) !== String(id));
+  localStorage.setItem('um-visits', JSON.stringify(visits));
+  hideConfirmModal();
+  renderTable();
+  toast('Visita eliminada correctamente.');
+}
+ 
 // ── VER FOTOS DE UNA VISITA (desde la tabla) ──────────────
 function viewVisitPhotos(id) {
   const v = visits.find(x => String(x.id) === String(id));
@@ -474,7 +556,7 @@ function viewVisitPhotos(id) {
   if (!fotos.length) return;
   openGallery(fotos, 0);
 }
-
+ 
 // ── FILTROS DE GRÁFICOS ───────────────────────────────────
 function populateChartFilterOptions() {
   const zones = [...new Set(visits.map(v => v.zone).filter(Boolean))].sort();
@@ -491,7 +573,7 @@ function populateChartFilterOptions() {
   fill('cf-agent', agents);
   fill('cf-problem', problems);
 }
-
+ 
 function getChartFilters() {
   return {
     start: document.getElementById('cf-date-start').value,
@@ -502,7 +584,7 @@ function getChartFilters() {
     agent: document.getElementById('cf-agent').value
   };
 }
-
+ 
 function applyChartFilters() {
   const f = getChartFilters();
   const filtered = visits.filter(v => {
@@ -516,19 +598,89 @@ function applyChartFilters() {
   });
   renderCharts(filtered);
 }
-
+ 
 function resetChartFilters() {
   ['cf-date-start', 'cf-date-end', 'cf-status', 'cf-zone', 'cf-problem', 'cf-agent']
     .forEach(id => { document.getElementById(id).value = ''; });
   renderCharts();
 }
-
-// ── GRÁFICOS ──────────────────────────────────────────────
+ 
+// ── GRÁFICOS DE BARRAS (SVG, con eje y grillas) ───────────
+// Calcula un máximo "redondo" para el eje (ej: 0,5,10...35) dejando
+// aire después del valor más alto, igual que en el dashboard de referencia.
+function niceAxis(maxVal) {
+  if (maxVal <= 0) return { axisMax: 5, step: 1 };
+  const rough = maxVal / 6;
+  const mag = Math.pow(10, Math.floor(Math.log10(rough)));
+  const norm = rough / mag;
+  let step;
+  if (norm <= 1) step = 1 * mag;
+  else if (norm <= 2) step = 2 * mag;
+  else if (norm <= 5) step = 5 * mag;
+  else step = 10 * mag;
+  let axisMax = Math.ceil((maxVal * 1.15) / step) * step;
+  if (axisMax <= maxVal) axisMax += step;
+  return { axisMax, step };
+}
+ 
+// Genera un gráfico de barras horizontales en SVG: eje numérico con
+// grillas verticales, barra por categoría con extremo redondeado y
+// etiqueta de valor (y % opcional) justo después de la punta de la barra.
+// Estimación aproximada del ancho de un texto en SVG (evita medir con
+// el DOM real, suficiente para reservar espacio y no cortar etiquetas).
+function estTextWidth(s, size = 12) {
+  return String(s).length * size * 0.56;
+}
+ 
+function hBarChartSVG(items) {
+  if (!items.length) return '<p style="font-size:13px;color:#888">Sin datos</p>';
+  const W = 520, rowH = 30, barH = 18, topPad = 8, axisLblH = 20;
+  // El ancho de la columna de etiquetas y del margen derecho se calculan
+  // según el texto más largo, para que ninguna etiqueta quede cortada.
+  const labelW = Math.min(210, Math.max(90, Math.round(Math.max(...items.map(i => estTextWidth(i.label))) + 24)));
+  const rightPad = Math.min(120, Math.max(60, Math.round(Math.max(...items.map(i =>
+    estTextWidth(i.pct != null ? `${i.value} (${i.pct}%)` : `${i.value}`, 12)
+  )) + 24)));
+  const plotW = W - labelW - rightPad;
+  const maxVal = Math.max(...items.map(i => i.value), 1);
+  const { axisMax, step } = niceAxis(maxVal);
+  const baseY = topPad + items.length * rowH;
+  const H = baseY + axisLblH + 6;
+  const xScale = v => (v / axisMax) * plotW;
+ 
+  const ticks = [];
+  for (let t = 0; t <= axisMax + 1e-6; t += step) ticks.push(Math.round(t * 100) / 100);
+ 
+  const gridlines = ticks.map(t => {
+    const x = (labelW + xScale(t)).toFixed(1);
+    return `<line x1="${x}" y1="${topPad - 2}" x2="${x}" y2="${(baseY + 2).toFixed(1)}" stroke="#e6e4de" stroke-width="1"/>`;
+  }).join('');
+ 
+  const axisLabels = ticks.map(t => {
+    const x = (labelW + xScale(t)).toFixed(1);
+    return `<text x="${x}" y="${(baseY + 16).toFixed(1)}" font-size="10.5" fill="#8b8a84" text-anchor="middle">${t}</text>`;
+  }).join('');
+ 
+  const baseline = `<line x1="${labelW}" y1="${(baseY + 2).toFixed(1)}" x2="${(labelW + plotW).toFixed(1)}" y2="${(baseY + 2).toFixed(1)}" stroke="#c9c7c0" stroke-width="1"/>`;
+ 
+  const bars = items.map((it, i) => {
+    const y = topPad + i * rowH + (rowH - barH) / 2;
+    const w = Math.max(2, xScale(it.value));
+    const midY = (y + barH / 2 + 4).toFixed(1);
+    const valText = it.pct != null ? `${it.value} (${it.pct}%)` : `${it.value}`;
+    return `<text x="${labelW - 10}" y="${midY}" font-size="12" fill="#54524c" text-anchor="end">${escapeXml(it.label)}</text>` +
+      `<rect x="${labelW}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${barH}" rx="4" fill="${it.color}"/>` +
+      `<text x="${(labelW + w + 8).toFixed(1)}" y="${midY}" font-size="12" font-weight="700" fill="#1a1a1a">${valText}</text>`;
+  }).join('');
+ 
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" style="display:block;font-family:inherit">${gridlines}${baseline}${bars}${axisLabels}</svg>`;
+}
+ 
 function renderCharts(list) {
   const data = list || visits;
   const cfCount = document.getElementById('cf-count');
   if (cfCount) cfCount.textContent = `Mostrando ${data.length} de ${visits.length} visitas`;
-
+ 
   const el = document.getElementById('charts-inner');
   if (!data.length) {
     el.innerHTML = '<div class="empty-state" style="background:white;border-radius:8px;padding:48px">No hay datos para los filtros seleccionados.</div>';
@@ -537,38 +689,39 @@ function renderCharts(list) {
   const byS = {}, byZ = {}, byP = {}, bySat = [0, 0, 0, 0, 0];
   data.forEach(v => {
     byS[v.status] = (byS[v.status] || 0) + 1;
-    if (v.zone) byZ[v.zone] = (byZ[v.zone] || 0) + 1;
+    const z = (v.zone || '').trim() || 'Sin zona';
+    byZ[z] = (byZ[z] || 0) + 1;
     (v.problems || []).forEach(p => byP[p] = (byP[p] || 0) + 1);
     if (v.satisfaccion >= 1 && v.satisfaccion <= 5) bySat[v.satisfaccion - 1]++;
   });
-  const topP = Object.entries(byP).sort((a, b) => b[1] - a[1]).slice(0, 8);
-  const maxP = topP.length ? topP[0][1] : 1;
-  const sCols = { 'Resuelto': '#3B6D11', 'En proceso': '#185FA5', 'Pendiente': '#854F0B' };
-  const sBars = Object.entries(byS).map(([k, v]) =>
-    `<div class="bar-row"><div class="bar-lbl">${k}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v / data.length * 100)}%;background:${sCols[k] || '#888'}"><span>${v}</span></div></div><div class="bar-pct">${Math.round(v / data.length * 100)}%</div></div>`
-  ).join('');
-  const pBars = topP.map(([k, v]) =>
-    `<div class="bar-row"><div class="bar-lbl">${k}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v / maxP * 100)}%;background:#B03A2E"><span>${v}</span></div></div></div>`
-  ).join('');
-  const zCards = Object.entries(byZ).sort((a, b) => b[1] - a[1]).map(([z, c]) =>
-    `<div class="zone-card"><div class="zone-num">${c}</div><div class="zone-nm">${z}</div></div>`
-  ).join('');
+ 
+  const sItems = Object.entries(byS).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({
+    label: k, value: v, pct: Math.round(v / data.length * 1000) / 10, color: STATUS_COLORS[k] || '#8b8a84'
+  }));
+  const zItems = Object.entries(byZ).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({
+    label: k, value: v, pct: Math.round(v / data.length * 1000) / 10, color: colorForZone(k)
+  }));
+  const pItems = Object.entries(byP).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, v]) => ({
+    label: k, value: v, color: colorForProblem(k)
+  }));
+ 
   const satArr = data.filter(v => v.satisfaccion);
   const satAvg = satArr.length ? (satArr.reduce((s, v) => s + (v.satisfaccion || 0), 0) / satArr.length).toFixed(1) : '—';
   const maxSat = Math.max(...bySat, 1);
+ 
   el.innerHTML = `
   <div class="ch-grid">
-    <div class="ch-card"><div class="ch-title">Visitas por estado</div>${sBars}</div>
-    <div class="ch-card"><div class="ch-title">Visitas por zona</div><div class="zone-grid">${zCards}</div></div>
+    <div class="ch-card"><div class="ch-title">Visitas por estado</div>${hBarChartSVG(sItems)}</div>
+    <div class="ch-card"><div class="ch-title">Visitas por zona</div>${hBarChartSVG(zItems)}</div>
   </div>
   <div class="ch-grid">
-    <div class="ch-card"><div class="ch-title">Problemas más frecuentes</div>${pBars || '<p style="font-size:13px;color:#888">Sin datos</p>'}</div>
+    <div class="ch-card"><div class="ch-title">Problemas más frecuentes</div>${hBarChartSVG(pItems)}</div>
     <div class="ch-card">
       <div class="ch-title">Satisfacción del cliente · promedio: ${satAvg}</div>
       <div style="display:flex;gap:8px;align-items:flex-end;height:80px;margin-top:12px">
         ${bySat.map((n, i) => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
-          <div style="width:100%;background:#D4832A;border-radius:4px 4px 0 0;height:${Math.max(4, Math.round(n / maxSat * 70))}px"></div>
-          <span style="font-size:11px;color:#888">${i + 1}★</span>
+          <div style="width:100%;background:#eda100;border-radius:4px 4px 0 0;height:${Math.max(4, Math.round(n / maxSat * 70))}px"></div>
+          <span style="font-size:11px;color:#8b8a84">${i + 1}★</span>
           <span style="font-size:11px;font-weight:600">${n}</span>
         </div>`).join('')}
       </div>
